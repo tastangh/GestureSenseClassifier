@@ -1,13 +1,14 @@
 from dataset import DataProcessor
 from evaluation import ModelEvaluator
 from random_forest_model import RandomForestClassifierModel
+from lstm_model import LSTMModel
 import os
 import numpy as np
 
-# Sınıflar
+# Sınıf isimleri
 classes = ["Taş(0)", "Kağıt(1)", "Makas(2)", "OK(3)"]
 
-# Verinin yüklenmesi ve işlenmesi
+# Veriyi işleme
 data_path = "dataset/"
 processor = DataProcessor(data_path=data_path, class_names=classes)
 dataset = processor.load_data()
@@ -32,11 +33,43 @@ def train_and_evaluate_random_forest():
     evaluator = ModelEvaluator(class_names=classes)
     evaluator.evaluate(y_test, y_pred_rf, model_name="Random Forest")
 
+# LSTM Modeli
+def train_and_evaluate_lstm(saved_model=False):
+    print("\n--- LSTM Modeli Eğitimi ve Değerlendirilmesi ---\n")
+
+    # LSTM için veriyi yeniden şekillendirme
+    X_train_reshaped = X_train.values.reshape(-1, 8, 8)
+    X_test_reshaped = X_test.values.reshape(-1, 8, 8)
+
+    # Etiketleri One-Hot Encoding'e çevirme
+    y_train_onehot = np.eye(len(classes))[y_train]
+    y_test_onehot = np.eye(len(classes))[y_test]
+
+    # LSTM Modelini başlatma
+    lstm_model = LSTMModel(n_steps=8, n_features=8, saved_model=saved_model)
+
+    # Model eğitimi
+    if not saved_model:
+        lstm_model.train(X_train_reshaped, y_train_onehot, epochs=50, batch_size=32)
+
+    # Tahminler
+    y_pred_lstm = lstm_model.predict(X_test_reshaped)
+
+    # Gerçek ve tahmin edilen sınıfları One-Hot'tan çıkartma
+    y_test_classes = np.argmax(y_test_onehot, axis=1)
+
+    # Değerlendirme
+    evaluator = ModelEvaluator(class_names=classes)
+    evaluator.evaluate(y_test_classes, y_pred_lstm, model_name="LSTM")
+
 if __name__ == "__main__":
     # Çıkış klasörlerini oluştur
     os.makedirs("results", exist_ok=True)
 
     # Random Forest Modeli
     train_and_evaluate_random_forest()
+
+    # LSTM Modeli
+    train_and_evaluate_lstm(saved_model=False)
 
     print("\n--- Tüm İşlemler Tamamlandı ---")

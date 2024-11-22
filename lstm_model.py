@@ -3,25 +3,29 @@ from keras.layers import LSTM, Dense, Dropout
 from sklearn import metrics
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 class LSTMModel:
-    def __init__(self, n_steps, n_features, saved_model=False):
+    def __init__(self, n_steps, n_features, saved_model=False, save_path="results"):
         """
         LSTM modelini başlatır.
         
         :param n_steps: Zaman adımlarının sayısı (örneğin 8 zaman adımı).
         :param n_features: Özellik sayısı (örneğin 8 sensör).
         :param saved_model: Eğer daha önce eğitilmiş bir model yüklenecekse True.
+        :param save_path: Grafik ve modelin kaydedileceği dizin.
         """
         self.n_steps = n_steps
         self.n_features = n_features
         self.saved_model = saved_model
+        self.save_path = save_path
+        os.makedirs(self.save_path, exist_ok=True)
         self.model = None
 
         # Eğer daha önce eğitilmiş model yüklenecekse
         if self.saved_model:
             print("Trained LSTM Model is loading...\n")
-            self.model = load_model("results/lstm_model.h5")
+            self.model = load_model(os.path.join(self.save_path, "lstm_model.h5"))
         else:
             print("LSTM Training Session has begun...\n")
             self.model = self._build_model()
@@ -53,17 +57,25 @@ class LSTMModel:
         """Modeli eğitir ve kaydeder."""
         history = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=2)
 
-        # Eğitim kaybını görselleştir
+        # Eğitim kaybı grafiğini çiz ve kaydet
         plt.plot(history.history['loss'])
         plt.title('Model Kaybı')
         plt.ylabel('Kayıp')
         plt.xlabel('Epok')
         plt.legend(['Eğitim'], loc='upper left')
+
+        # Kaydetme işlemi
+        loss_plot_path = os.path.join(self.save_path, "lstm_loss_plot.png")
+        plt.savefig(loss_plot_path)
+        print(f"Loss grafiği kaydedildi: {loss_plot_path}")
+
         plt.show()
+        plt.close()
 
         # Eğitilmiş modeli kaydet
-        self.model.save("results/lstm_model.h5")
-        print("Model saved to disk.\n")
+        model_save_path = os.path.join(self.save_path, "lstm_model.h5")
+        self.model.save(model_save_path)
+        print(f"model {model_save_path}'a kayededildi.\n")
 
     def predict(self, X_test):
         """Test seti üzerinde tahmin yapar."""

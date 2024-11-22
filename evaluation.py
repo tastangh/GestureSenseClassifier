@@ -32,14 +32,9 @@ class ModelEvaluator:
         cm = metrics.confusion_matrix(y_test, y_pred)
         self.plot_confusion_matrix(cm, model_name=model_name)
 
-        # Grafik kaydetme
-        save_file = os.path.join(self.save_path, f"{model_name.lower().replace(' ', '_')}_confusion_matrix.png")
-        plt.savefig(save_file)
-        print(f"{model_name} Confusion Matrix grafiği kaydedildi: {save_file}")
-
     def plot_confusion_matrix(self, cm, model_name="Model"):
         """
-        Karmaşıklık matrisini çizer.
+        Karmaşıklık matrisini çizer ve kaydeder.
         
         :param cm: Karmaşıklık matrisi.
         :param model_name: Model adı (grafik başlığı).
@@ -62,4 +57,12 @@ class ModelEvaluator:
         plt.ylabel('Gerçek Etiket')
         plt.xlabel('Tahmin Edilen Etiket')
         plt.tight_layout()
+
+        # Grafik kaydetme
+        save_file = os.path.join(self.save_path, f"{model_name.lower().replace(' ', '_')}_confusion_matrix.png")
+        plt.savefig(save_file)
+        print(f"{model_name} Confusion Matrix grafiği kaydedildi: {save_file}")
+
+        # Show işlemi kaydettikten sonra yapılmalı
         plt.show()
+        plt.close()  # Grafiği temizle
