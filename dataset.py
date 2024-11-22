@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 class DataProcessor:
     def __init__(self, data_path, class_names, num_features=64):
@@ -28,9 +29,30 @@ class DataProcessor:
         print("All data loaded and concatenated.")
         return self.dataset
 
+    def preprocess(self):
+        """
+        Veriyi normalize eder ve şekillendirir.
+        :return: Normalized and reshaped data (X), labels (y)
+        """
+        print("Veri işleniyor...")
+        X = np.array(self.dataset.iloc[:, :-1])  # Özellikler
+        y = np.array(self.dataset.iloc[:, -1])  # Etiketler
+
+        # Veriyi normalize et
+        scaler = StandardScaler()
+        X = scaler.fit_transform(X)
+
+        # Veriyi yeniden şekillendir (8x8 matris)
+        X = X.reshape(-1, 8, 8)
+        for i in range(len(X)):
+            X[i] = X[i].T  # Transpose işlemi
+
+        print("Veri normalleştirildi ve yeniden şekillendirildi.\n")
+        return X, y
+
     def train_test_split(self, X, y, test_size=0.33):
         """Veriyi eğitim ve test setlerine böler."""
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
         print("Data split into training and testing sets.")
         return X_train, X_test, y_train, y_test
     
@@ -113,8 +135,6 @@ class DataProcessor:
         plt.show()
         print(f"Figür {save_file} konumuna kaydedildi.")
 
-
-# Eğer dosya bağımsız çalıştırılırsa
 if __name__ == '__main__':
     data_path = "dataset/"
     classes = ["Taş(0)", "Kağıt(1)", "Makas(2)", "OK(3)"]
@@ -125,21 +145,19 @@ if __name__ == '__main__':
     # Veriyi yükle
     dataset = processor.load_data()
 
-    # Sonuçları saklamak için sonuç klasörü oluştur
-    results_dir = "results/dataset"
-    os.makedirs(results_dir, exist_ok=True)
+    # Veriyi işle (preprocess)
+    X, y = processor.preprocess()
 
-    # Eğitim ve test dağılımlarını kontrol et
-    print("\n--- Kontrol: Eğitim ve Test Sınıf Dağılımı ---\n")
-
-    X = dataset.iloc[:, :-1]  # Özellik sütunları
-    y = dataset.iloc[:, -1]   # Etiket sütunu
-
-    # Veriyi eğitim ve test setlerine ayır
+    # Eğitim ve test setlerine ayır
     X_train, X_test, y_train, y_test = processor.train_test_split(X, y)
+
+    # Eğitim ve test dağılımını kontrol et
     processor.check_train_test_distribution(y_train, y_test)
 
     # Eğitim ve test seti dağılımlarını bir dosyaya kaydet
+    results_dir = "results/dataset"
+    os.makedirs(results_dir, exist_ok=True)
+
     txt_file_path = os.path.join(results_dir, "train_test_distribution.txt")
     with open(txt_file_path, "w") as f:
         f.write("Eğitim ve Test Sınıf Dağılımı:\n")
