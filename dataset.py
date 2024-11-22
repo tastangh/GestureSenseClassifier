@@ -33,6 +33,50 @@ class DataProcessor:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)
         print("Data split into training and testing sets.")
         return X_train, X_test, y_train, y_test
+    
+    def check_train_test_distribution(self, y_train, y_test, sequential=False):
+        """
+        Eğitim ve test setindeki sınıf dağılımlarını gözlemler ve çıktı verir.
+
+        :param y_train: Eğitim setindeki etiketler
+        :param y_test: Test setindeki etiketler
+        :param sequential: Etiketlerin one-hot encoding formatında olup olmadığını belirtir
+        """
+        # One-hot encoding varsa, decoder ile düzelt
+        if sequential:
+            y_train = self.decoder(y_train)
+            y_test = self.decoder(y_test)
+
+        # Eğitim ve test seti için sınıf sayımlarını hesapla
+        train_class_counts = [(y_train == i).sum() for i in range(len(self.class_names))]
+        test_class_counts = [(y_test == i).sum() for i in range(len(self.class_names))]
+
+        # Dağılımları yazdır
+        width_x = max(len(x) for x in self.class_names)
+        res = "\n".join(
+            "{:>{}} : {}  {}".format(cls, width_x, train_count, test_count)
+            for cls, train_count, test_count in zip(self.class_names, train_class_counts, test_class_counts)
+        )
+        print("Eğitim ve test seti sınıf dağılımları:")
+        print(res + "\n")
+         # Eğitim ve test seti dağılımlarını bir dosyaya kaydet
+        txt_file_path = os.path.join(results_dir, "train_test_distribution.txt")
+        with open(txt_file_path, "w") as f:
+            f.write("Eğitim ve Test Sınıf Dağılımı:\n")
+            train_class_counts = [(y_train == i).sum() for i in range(len(classes))]
+            test_class_counts = [(y_test == i).sum() for i in range(len(classes))]
+            width_x = max(len(x) for x in classes)
+            for cls, train_count, test_count in zip(classes, train_class_counts, test_class_counts):
+                line = f"{cls:>{width_x}}(Sınıf) : {train_count} (Eğitim Data Sayısı) {test_count} (Test Data Sayısı)\n"
+                f.write(line)
+            print(f"\nEğitim ve test seti dağılımı '{txt_file_path}' dosyasına kaydedildi.")
+
+
+    def decoder(self, y_list):
+        """
+        One-hot encoded etiketleri düz sınıf etiketlerine çevirir.
+        """
+        return np.array([np.argmax(y) for y in y_list])
 
     def plot_8sensors_data(self, data_row, title, interval=40, no_of_sensors=8, n_steps=8):
         """
@@ -79,27 +123,39 @@ class DataProcessor:
         save_file = os.path.join(save_path, file_name)
         fig.savefig(save_file, dpi=100)
         plt.show()
-        print(f"Figure saved to {save_file}")
+        print(f"Figür {save_file} konumuna kaydedildi.")
 
 
 # Eğer dosya bağımsız çalıştırılırsa
 if __name__ == '__main__':
-
     data_path = "dataset/"
     classes = ["Taş(0)", "Kağıt(1)", "Makas(2)", "OK(3)"]
-
 
     # DataProcessor nesnesi oluşturuluyor
     processor = DataProcessor(data_path, classes)
 
     # Veriyi yükle
-    processor.load_data()
+    dataset = processor.load_data()
+
+    # Sonuçları saklamak için sonuç klasörü oluştur
+    results_dir = "results/dataset"
+    os.makedirs(results_dir, exist_ok=True)
+
+    # Eğitim ve test dağılımlarını kontrol et
+    print("\n--- Kontrol: Eğitim ve Test Sınıf Dağılımı ---\n")
+
+    X = dataset.iloc[:, :-1]  # Özellik sütunları
+    y = dataset.iloc[:, -1]   # Etiket sütunu
+
+    # Veriyi eğitim ve test setlerine ayır
+    X_train, X_test, y_train, y_test = processor.train_test_split(X, y)
+    processor.check_train_test_distribution(y_train, y_test)
 
     # Her sınıfın ilk satırını görselleştir
-    print("Visualizing sensor data for each class...")
+    print("\n--- Görselleştirme: Sensör Verisi ---\n")
     for i, class_name in enumerate(classes):
         data_row = processor.dataset.iloc[i]
+        print(f"Görselleştiriliyor: {class_name}")
         processor.plot_8sensors_data(data_row, title=class_name)
 
-
-    print("Visualization completed.")
+    print("\n--- Tüm İşlemler Tamamlandı ---")
