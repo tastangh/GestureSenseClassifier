@@ -17,7 +17,7 @@ class RandomForestClassifierModel:
         :param X_train: Eğitim için kullanılacak özellikler.
         :param y_train: Eğitim için kullanılacak hedef değişken.
         :param X_test: Test için kullanılacak özellikler.
-        :return: y_test (gerçek değerler) ve y_pred (tahmin edilen değerler).
+        :return: Tahmin edilen etiketler.
         """
         print("RandomForest eğitim oturumu başladı...\n")
         self.model.fit(X_train, y_train)
