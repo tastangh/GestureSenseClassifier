@@ -59,18 +59,6 @@ class DataProcessor:
         )
         print("Eğitim ve test seti sınıf dağılımları:")
         print(res + "\n")
-         # Eğitim ve test seti dağılımlarını bir dosyaya kaydet
-        txt_file_path = os.path.join(results_dir, "train_test_distribution.txt")
-        with open(txt_file_path, "w") as f:
-            f.write("Eğitim ve Test Sınıf Dağılımı:\n")
-            train_class_counts = [(y_train == i).sum() for i in range(len(classes))]
-            test_class_counts = [(y_test == i).sum() for i in range(len(classes))]
-            width_x = max(len(x) for x in classes)
-            for cls, train_count, test_count in zip(classes, train_class_counts, test_class_counts):
-                line = f"{cls:>{width_x}}(Sınıf) : {train_count} (Eğitim Data Sayısı) {test_count} (Test Data Sayısı)\n"
-                f.write(line)
-            print(f"\nEğitim ve test seti dağılımı '{txt_file_path}' dosyasına kaydedildi.")
-
 
     def decoder(self, y_list):
         """
@@ -150,6 +138,18 @@ if __name__ == '__main__':
     # Veriyi eğitim ve test setlerine ayır
     X_train, X_test, y_train, y_test = processor.train_test_split(X, y)
     processor.check_train_test_distribution(y_train, y_test)
+
+    # Eğitim ve test seti dağılımlarını bir dosyaya kaydet
+    txt_file_path = os.path.join(results_dir, "train_test_distribution.txt")
+    with open(txt_file_path, "w") as f:
+        f.write("Eğitim ve Test Sınıf Dağılımı:\n")
+        train_class_counts = [(y_train == i).sum() for i in range(len(classes))]
+        test_class_counts = [(y_test == i).sum() for i in range(len(classes))]
+        width_x = max(len(x) for x in classes)
+        for cls, train_count, test_count in zip(classes, train_class_counts, test_class_counts):
+            line = f"{cls:>{width_x}}(Sınıf) : {train_count} (Eğitim Data Sayısı) {test_count} (Test Data Sayısı)\n"
+            f.write(line)
+        print(f"\nEğitim ve test seti dağılımı '{txt_file_path}' dosyasına kaydedildi.")
 
     # Her sınıfın ilk satırını görselleştir
     print("\n--- Görselleştirme: Sensör Verisi ---\n")
