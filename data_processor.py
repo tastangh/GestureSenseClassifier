@@ -147,7 +147,7 @@ class DataProcessor:
             # self.plot_densities(sample_row, class_name)
             # self.plot_box(sample_row, class_name)
             self.plot_heatmap(sample_row, class_name)
-            self.plot_autocorrelation(sample_row, class_name)
+            # self.plot_autocorrelation(sample_row, class_name)
 
 if __name__ == "__main__":
     # Veri dosyasının yolu ve sınıf isimleri
