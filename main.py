@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 from data_processor import DataProcessor
-from feature_extract import FeatureExtractor
+from feature_extractor import FeatureExtractor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFE
 from sklearn.svm import SVC

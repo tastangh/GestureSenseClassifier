@@ -69,22 +69,36 @@ class DataFilter:
 
 # Kullanım Örneği
 if __name__ == "__main__":
-    # Veri dosyalarının yolları ve sınıf isimleri
-    raw_data_path = "dataset/emg_data.csv"
-    filtered_data_path = "filtered_dataset/emg_filtered.csv"
-    class_names = ["Taş(0)", "Kağıt(1)", "Makas(2)", "OK(3)"]
+    import os
+    from data_processor import DataProcessor
+    from data_filter import DataFilter
 
-    # 1. DataFilter: Filtreleme işlemi
-    print("\n--- Filtreleme İşlemi ---")
-    data_filter = DataFilter(raw_data_path, filtered_data_path)
-    data_filter.load_data()
-    data_filter.filter_data()
-    data_filter.save_data()
+    # 1. Ham Veriyi Görselleştirme
+    raw_processor = DataProcessor(["Taş(0)", "Kağıt(1)", "Makas(2)", "OK(3)"])
+    raw_processor.set_data_path("dataset/emg_data.csv")
+    raw_processor.set_save_path("results/raw_data_visualizations")
+    raw_processor.load_data()
+    raw_processor.visualize_each_class()
 
-    # 2. DataProcessor: Görselleştirme işlemi
-    print("\n--- Görselleştirme İşlemi (Filtrelenmiş Veri) ---")
-    processor = DataProcessor(filtered_data_path, class_names)
-    processor.load_data()  # Varsayılan olarak filtrelenmiş veriyi yükler
-    processor.visualize_each_class()
+    # 2. Filtreleme İşlemi
+    print("\n--- Filtreleme işlemi başlıyor ---")
+    filter_processor = DataFilter(
+        input_path="dataset/emg_data.csv",
+        output_path="filtered_dataset/emg_filtered_data.csv",
+        lowcut=5,
+        highcut=90,
+        fs=200,
+        order=4,
+    )
+    filter_processor.load_data()  # Ham veriyi yükle
+    filtered_dataset = filter_processor.filter_data()  # Filtre uygula
+    filter_processor.save_data()  # Filtrelenmiş veriyi kaydet
+
+    # 3. Filtrelenmiş Veriyi Görselleştirme
+    filtered_processor = DataProcessor(["Taş(0)", "Kağıt(1)", "Makas(2)", "OK(3)"])
+    filtered_processor.set_data_path("filtered_dataset/emg_filtered_data.csv")
+    filtered_processor.set_save_path("results/filtered_data_visualizations")
+    filtered_processor.load_data()
+    filtered_processor.visualize_each_class()
 
     print("\n--- Tüm işlemler başarıyla tamamlandı ---")
