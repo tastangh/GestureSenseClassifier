@@ -45,7 +45,8 @@ class DataProcessor:
 
         save_file = os.path.join(self.save_path, f"{class_name.lower().replace(' ', '_')}_line.png")
         plt.savefig(save_file)
-        plt.show()
+        # plt.show()
+
         print(f"{class_name} sınıfı için çizgi grafiği {save_file} konumuna kaydedildi.")
 
     def plot_histograms(self, data_row, class_name):
@@ -62,7 +63,8 @@ class DataProcessor:
 
         save_file = os.path.join(self.save_path, f"{class_name.lower().replace(' ', '_')}_histograms.png")
         plt.savefig(save_file)
-        plt.show()
+        # plt.show()
+
         print(f"{class_name} sınıfı için sensör bazında histogramlar {save_file} konumuna kaydedildi.")
 
     def plot_densities(self, data_row, class_name):
@@ -79,7 +81,8 @@ class DataProcessor:
 
         save_file = os.path.join(self.save_path, f"{class_name.lower().replace(' ', '_')}_densities.png")
         plt.savefig(save_file)
-        plt.show()
+        # plt.show()
+
         print(f"{class_name} sınıfı için yoğunluk grafikleri {save_file} konumuna kaydedildi.")
 
     def plot_box(self, data_row, class_name):
@@ -93,14 +96,15 @@ class DataProcessor:
 
         save_file = os.path.join(self.save_path, f"{class_name.lower().replace(' ', '_')}_box.png")
         plt.savefig(save_file)
-        plt.show()
+        # plt.show()
+
         print(f"{class_name} sınıfı için box plot {save_file} konumuna kaydedildi.")
 
     def plot_heatmap(self, data_row, class_name):
         """Isı Haritası."""
         heatmap_data = data_row.values.reshape(8, 8)
         plt.figure(figsize=(8, 6))
-        plt.imshow(heatmap_data, cmap="RdYlGn", aspect="auto")
+        plt.imshow(heatmap_data, cmap="coolwarm", aspect="auto")
         plt.colorbar(label="Örnek Değeri")
         plt.title(f"{class_name} Hareketi - Isı Haritası")
         plt.xlabel("Zaman Noktası")
@@ -108,7 +112,8 @@ class DataProcessor:
 
         save_file = os.path.join(self.save_path, f"{class_name.lower().replace(' ', '_')}_heatmap.png")
         plt.savefig(save_file)
-        plt.show()
+        # plt.show()
+
         print(f"{class_name} sınıfı için ısı haritası {save_file} konumuna kaydedildi.")
 
     def plot_autocorrelation(self, data_row, class_name):
@@ -123,7 +128,8 @@ class DataProcessor:
 
         save_file = os.path.join(self.save_path, f"{class_name.lower().replace(' ', '_')}_autocorrelation.png")
         plt.savefig(save_file)
-        plt.show()
+        # plt.show()
+
         print(f"{class_name} sınıfı için sensör bazında otomatik korelasyon grafikleri {save_file} konumuna kaydedildi.")
 
     def visualize_each_class(self):
@@ -141,7 +147,7 @@ class DataProcessor:
             # self.plot_densities(sample_row, class_name)
             # self.plot_box(sample_row, class_name)
             self.plot_heatmap(sample_row, class_name)
-            # self.plot_autocorrelation(sample_row, class_name)
+            self.plot_autocorrelation(sample_row, class_name)
 
 if __name__ == "__main__":
     # Veri dosyasının yolu ve sınıf isimleri
