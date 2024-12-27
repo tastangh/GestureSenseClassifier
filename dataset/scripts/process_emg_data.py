@@ -1,22 +1,36 @@
 import pandas as pd
 
-# Dosyanın adını belirtin
-file_path = "emg_data.csv"  # Dosya yolunu kendi dosyanıza göre güncelleyin
+# Dosya yollarını belirtin
+file_paths = [
+    "../0.csv",  # İlk dosya
+    "../1.csv",  # İkinci dosya
+    "../2.csv",  # Üçüncü dosya
+    "../3.csv",  # Dördüncü dosya
+]
 
-# CSV dosyasını oku
-df = pd.read_csv(file_path, header=None)
+# Tüm veriyi saklamak için bir liste
+datasets = []
 
-# Sütun isimlerini oluştur
-sensor_columns = [f"S{sensor_num}_R{reading_num}" 
-                  for reading_num in range(1, 9) 
-                  for sensor_num in range(1, 9)]
+# Dosyaları okuyup sütunları etiketleme
+for file_path in file_paths:
+    df = pd.read_csv(file_path, header=None)
+    sensor_columns = [f"Sensor{sensor_num}_Reading{reading_num}" 
+                      for reading_num in range(1, 9) 
+                      for sensor_num in range(1, 9)]
+    df.columns = sensor_columns + ["Gesture_Class"]
+    datasets.append(df)
 
-# Sütun isimlerini atayın (Son sütun 'Gesture_Class')
-df.columns = sensor_columns + ["Gesture_Class"]
+# Dosyaları birleştir
+combined_df = pd.concat(datasets, ignore_index=True)
 
-# İlk birkaç satırı kontrol edin
-print(df.head())
+# Veriyi karıştırma
+shuffled_df = combined_df.sample(frac=1, random_state=42).reset_index(drop=True)
 
-# Dosyanın işlenmiş halini kaydetmek isterseniz:
-df.to_csv("labeled_emg_data.csv", index=False)
-print("Dosya başarıyla 'labeled_emg_data.csv' olarak kaydedildi.")
+# Karıştırılmış veriyi kaydetme
+output_file = "../emg_data.csv"
+shuffled_df.to_csv(output_file, index=False)
+
+# Çıkış bilgisi
+print(f"Karıştırılmış veri '{output_file}' dosyasına kaydedildi.")
+print("Karıştırılmış verinin ilk 5 satırı:")
+print(shuffled_df.head())
