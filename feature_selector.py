@@ -109,27 +109,97 @@ class FeatureSelector:
         self.X = self.X[selected_features]
         return self.X
 
+    def visualize_feature_scores(self, method="f_classif"):
+        """
+        Tüm özelliklerin ayırt edicilik skorlarını hesaplar ve görselleştirir.
+        :param method: Özellik seçimi yöntemi ('f_classif' veya 'mutual_info')
+        """
+        if method == "f_classif":
+            scores = f_classif(self.X, self.y)[0]
+            score_type = "F-Score"
+        elif method == "mutual_info":
+            scores = mutual_info_classif(self.X, self.y)
+            score_type = "Mutual Information"
+        else:
+            raise ValueError("Geçersiz yöntem: 'f_classif' veya 'mutual_info' kullanın.")
+
+        feature_scores = pd.DataFrame({
+            "Feature": self.X.columns,
+            "Score": scores
+        }).sort_values(by="Score", ascending=False)
+
+        # Skorları görselleştir
+        plt.figure(figsize=(12, 8))
+        sns.barplot(x="Score", y="Feature", data=feature_scores, palette="coolwarm")
+        plt.title(f"Feature Scores ({score_type})")
+        plt.xlabel(score_type)
+        plt.ylabel("Features")
+        plt.tight_layout()
+        save_path = os.path.join(self.output_dir, f"feature_scores_{method}.png")
+        plt.savefig(save_path)
+        plt.close()
+        print(f"Özellik skorları görselleştirme kaydedildi: {save_path}")
+
+    def compute_feature_weights(self, method="f_classif"):
+        """
+        Özelliklere ağırlık atar.
+        :param method: Özellik seçimi yöntemi ('f_classif' veya 'mutual_info')
+        :return: Özellik ağırlıkları (DataFrame)
+        """
+        if method == "f_classif":
+            scores = f_classif(self.X, self.y)[0]
+            score_type = "F-Score"
+        elif method == "mutual_info":
+            scores = mutual_info_classif(self.X, self.y)
+            score_type = "Mutual Information"
+        else:
+            raise ValueError("Geçersiz yöntem: 'f_classif' veya 'mutual_info' kullanın.")
+
+        # Skorları normalize ederek ağırlıklandırma
+        normalized_scores = scores / np.sum(scores)
+        feature_weights = pd.DataFrame({
+            "Feature": self.X.columns,
+            "Weight": normalized_scores
+        }).sort_values(by="Weight", ascending=False)
+
+        # Ağırlıkları görselleştir
+        plt.figure(figsize=(12, 8))
+        sns.barplot(x="Weight", y="Feature", data=feature_weights, palette="coolwarm")
+        plt.title(f"Feature Weights ({score_type})")
+        plt.xlabel("Weight")
+        plt.ylabel("Feature")
+        plt.tight_layout()
+        save_path = os.path.join(self.output_dir, f"feature_weights_{method}.png")
+        plt.savefig(save_path)
+        plt.close()
+
+        print(f"Özellik ağırlıkları görselleştirme kaydedildi: {save_path}")
+        return feature_weights
+
 
 if __name__ == "__main__":
-    # Örnek veri yükleme
+    # Ham ve filtrelenmiş özelliklerin yolları
     raw_features_path = "results/features/raw_features_with_labels.csv"
     filtered_features_path = "results/features/filtered_features_with_labels.csv"
 
+    # Veri yükleme
     raw_features_df = pd.read_csv(raw_features_path)
     filtered_features_df = pd.read_csv(filtered_features_path)
 
-    # Ham özellikler üzerinde seçim
-    print("Ham özellikler üzerinde seçim yapılıyor...")
-    raw_selector = FeatureSelector(raw_features_df)
-    raw_selector.remove_highly_correlated_features()
-    raw_selector.select_top_k_features(k=10, method="f_classif")
-    raw_selector.model_based_feature_selection(top_n=10)
+    # Ham özellikler üzerinde işlemler
+    print("Ham özellikler için ağırlıklandırma...")
+    raw_selector = FeatureSelector(raw_features_df, output_dir="results/feature_selection/raw")
+    raw_feature_weights = raw_selector.compute_feature_weights(method="f_classif")
+    print("Ham veri ağırlıkları:\n", raw_feature_weights)
 
-    # Filtrelenmiş özellikler üzerinde seçim
-    print("Filtrelenmiş özellikler üzerinde seçim yapılıyor...")
-    filtered_selector = FeatureSelector(filtered_features_df)
-    filtered_selector.remove_highly_correlated_features()
-    filtered_selector.select_top_k_features(k=10, method="mutual_info")
-    filtered_selector.model_based_feature_selection(top_n=10)
+    # Filtrelenmiş özellikler üzerinde işlemler
+    print("Filtrelenmiş özellikler için ağırlıklandırma...")
+    filtered_selector = FeatureSelector(filtered_features_df, output_dir="results/feature_selection/filtered")
+    filtered_feature_weights = filtered_selector.compute_feature_weights(method="f_classif")
+    print("Filtrelenmiş veri ağırlıkları:\n", filtered_feature_weights)
 
-    print("\n--- Tüm Özellik Seçimi İşlemleri Tamamlandı ---")
+    # Görselleştirme sonuçlarının kaydedilmesi
+    raw_selector.visualize_feature_scores(method="f_classif")
+    filtered_selector.visualize_feature_scores(method="f_classif")
+
+    print("\n--- Tüm İşlemler Tamamlandı ---")
