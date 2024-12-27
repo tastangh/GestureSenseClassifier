@@ -4,7 +4,7 @@ Gesture Sense Classifier
 Sanal Ortam Kurulumu
 1. Sanal Ortam Oluşturma
 Sanal ortam oluşturmak için terminalde aşağıdaki komutu çalıştırın:
-python -m venv GSCenv
+python -m venv gscenv
 2. Sanal Ortamı Etkinleştirme
 Linux veya macOS'te
 source gscenv/bin/activate
