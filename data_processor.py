@@ -5,22 +5,36 @@ import numpy as np
 from pandas.plotting import autocorrelation_plot
 
 class DataProcessor:
-    def __init__(self, data_path, class_names, save_path="results/dataset"):
+    def __init__(self, class_names):
         """
-        :param data_path: Karıştırılmış veri dosyasının yolu
         :param class_names: Sınıf isimlerinin listesi
-        :param save_path: Grafiklerin kaydedileceği dizin
         """
-        self.data_path = data_path
-        self.class_names = class_names
-        self.save_path = save_path
         self.dataset = None
+        self.class_names = class_names
+        self.data_path = None
+        self.save_path = None
 
-        # Klasör oluştur
-        os.makedirs(self.save_path, exist_ok=True)
+    def set_data_path(self, data_path):
+        """Veri dosyasının yolunu ayarlar."""
+        self.data_path = data_path
+
+    def get_data_path(self):
+        """Veri dosyasının yolunu döndürür."""
+        return self.data_path
+
+    def set_save_path(self, save_path):
+        """Grafiklerin kaydedileceği yolu ayarlar."""
+        self.save_path = save_path
+
+    def get_save_path(self):
+        """Grafiklerin kaydedileceği yolu döndürür."""
+        return self.save_path
 
     def load_data(self):
         """Veriyi yükler."""
+        if self.data_path is None:
+            raise ValueError("Veri yolu ayarlanmamış. Önce `set_data_path()` çağrılmalı.")
+        
         if os.path.exists(self.data_path):
             print(f"{self.data_path} yükleniyor...")
             self.dataset = pd.read_csv(self.data_path)
@@ -28,6 +42,27 @@ class DataProcessor:
         else:
             raise FileNotFoundError(f"{self.data_path} dosyası bulunamadı!")
         return self.dataset
+
+    def visualize_each_class(self):
+        """Her Gesture_Class için bir örnek seçer ve görselleştirir."""
+        if self.dataset is None:
+            raise ValueError("Veri seti yüklenmemiş. Önce `load_data()` çağrılmalı.")
+        if self.save_path is None:
+            raise ValueError("Kaydetme yolu ayarlanmamış. Önce `set_save_path()` çağrılmalı.")
+
+        os.makedirs(self.save_path, exist_ok=True)
+
+        gesture_classes = self.dataset["Gesture_Class"].unique()
+        for gesture_class in gesture_classes:
+            sample_row = self.dataset[self.dataset["Gesture_Class"] == gesture_class].iloc[0, :-1]
+            class_name = self.class_names[int(gesture_class)]
+            print(f"{class_name} sınıfı görselleştiriliyor...")
+            self.plot_line(sample_row, class_name)
+            # self.plot_histograms(sample_row, class_name)
+            # self.plot_densities(sample_row, class_name)
+            # self.plot_box(sample_row, class_name)
+            self.plot_heatmap(sample_row, class_name)
+            # self.plot_autocorrelation(sample_row, class_name)
 
     def plot_line(self, data_row, class_name):
         """Zaman serisi çizgi grafiği."""
@@ -45,7 +80,7 @@ class DataProcessor:
 
         save_file = os.path.join(self.save_path, f"{class_name.lower().replace(' ', '_')}_line.png")
         plt.savefig(save_file)
-        # plt.show()
+        plt.close()
 
         print(f"{class_name} sınıfı için çizgi grafiği {save_file} konumuna kaydedildi.")
 
@@ -63,7 +98,7 @@ class DataProcessor:
 
         save_file = os.path.join(self.save_path, f"{class_name.lower().replace(' ', '_')}_histograms.png")
         plt.savefig(save_file)
-        # plt.show()
+        plt.close()
 
         print(f"{class_name} sınıfı için sensör bazında histogramlar {save_file} konumuna kaydedildi.")
 
@@ -81,7 +116,7 @@ class DataProcessor:
 
         save_file = os.path.join(self.save_path, f"{class_name.lower().replace(' ', '_')}_densities.png")
         plt.savefig(save_file)
-        # plt.show()
+        plt.close()
 
         print(f"{class_name} sınıfı için yoğunluk grafikleri {save_file} konumuna kaydedildi.")
 
@@ -89,16 +124,17 @@ class DataProcessor:
         """Box-and-Whisker Plot."""
         data = data_row.values.reshape(8, 8).T
         plt.figure(figsize=(12, 6))
-        plt.boxplot(data, labels=[f"Sensor {i+1}" for i in range(8)], vert=True)
+        plt.boxplot(data, tick_labels=[f"Sensor {i+1}" for i in range(8)], vert=True)
         plt.title(f"{class_name} Hareketi - Box-and-Whisker Plot")
         plt.xlabel("Sensör")
         plt.ylabel("Örnek Değeri")
 
         save_file = os.path.join(self.save_path, f"{class_name.lower().replace(' ', '_')}_box.png")
         plt.savefig(save_file)
-        # plt.show()
+        plt.close()
 
         print(f"{class_name} sınıfı için box plot {save_file} konumuna kaydedildi.")
+
 
     def plot_heatmap(self, data_row, class_name):
         """Isı Haritası."""
@@ -112,7 +148,7 @@ class DataProcessor:
 
         save_file = os.path.join(self.save_path, f"{class_name.lower().replace(' ', '_')}_heatmap.png")
         plt.savefig(save_file)
-        # plt.show()
+        plt.close()
 
         print(f"{class_name} sınıfı için ısı haritası {save_file} konumuna kaydedildi.")
 
@@ -128,26 +164,9 @@ class DataProcessor:
 
         save_file = os.path.join(self.save_path, f"{class_name.lower().replace(' ', '_')}_autocorrelation.png")
         plt.savefig(save_file)
-        # plt.show()
+        plt.close()
 
         print(f"{class_name} sınıfı için sensör bazında otomatik korelasyon grafikleri {save_file} konumuna kaydedildi.")
-
-    def visualize_each_class(self):
-        """Her Gesture_Class için bir örnek seçer ve görselleştirir."""
-        if self.dataset is None:
-            raise ValueError("Veri seti yüklenmemiş. Önce `load_data` çağrılmalı.")
-        
-        gesture_classes = self.dataset["Gesture_Class"].unique()
-        for gesture_class in gesture_classes:
-            sample_row = self.dataset[self.dataset["Gesture_Class"] == gesture_class].iloc[0, :-1]
-            class_name = self.class_names[int(gesture_class)]
-            print(f"{class_name} sınıfı görselleştiriliyor...")
-            self.plot_line(sample_row, class_name)
-            # self.plot_histograms(sample_row, class_name)
-            # self.plot_densities(sample_row, class_name)
-            # self.plot_box(sample_row, class_name)
-            self.plot_heatmap(sample_row, class_name)
-            # self.plot_autocorrelation(sample_row, class_name)
 
 if __name__ == "__main__":
     # Veri dosyasının yolu ve sınıf isimleri
@@ -155,8 +174,9 @@ if __name__ == "__main__":
     class_names = ["Taş(0)", "Kağıt(1)", "Makas(2)", "OK(3)"]
 
     # DataProcessor nesnesi oluştur
-    processor = DataProcessor(data_path, class_names)
-
+    processor = DataProcessor(class_names)
+    processor.set_data_path("dataset/emg_data.csv")
+    processor.set_save_path("results/raw_data_visualizations")
     # Veriyi yükle
     dataset = processor.load_data()
 
