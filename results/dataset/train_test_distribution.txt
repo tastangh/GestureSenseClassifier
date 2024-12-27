@@ -1,5 +1,5 @@
-EÄŸitim ve Test SÄ±nÄ±f DaÄŸÄ±lÄ±mÄ±:
-  TaÅŸ(0)(SÄ±nÄ±f) : 1958 (EÄŸitim Data SayÄ±sÄ±) 952 (Test Data SayÄ±sÄ±)
-KaÄŸÄ±t(1)(SÄ±nÄ±f) : 1907 (EÄŸitim Data SayÄ±sÄ±) 996 (Test Data SayÄ±sÄ±)
-Makas(2)(SÄ±nÄ±f) : 1985 (EÄŸitim Data SayÄ±sÄ±) 958 (Test Data SayÄ±sÄ±)
-   OK(3)(SÄ±nÄ±f) : 1974 (EÄŸitim Data SayÄ±sÄ±) 948 (Test Data SayÄ±sÄ±)
+Eğitim ve Test Sınıf Dağılımı:
+  Taş(0)(Sınıf) : 1947 (Eğitim Data Sayısı) 963 (Test Data Sayısı)
+Kağıt(1)(Sınıf) : 1912 (Eğitim Data Sayısı) 991 (Test Data Sayısı)
+Makas(2)(Sınıf) : 1996 (Eğitim Data Sayısı) 947 (Test Data Sayısı)
+   OK(3)(Sınıf) : 1969 (Eğitim Data Sayısı) 953 (Test Data Sayısı)
