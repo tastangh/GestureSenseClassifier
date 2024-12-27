@@ -70,38 +70,6 @@ class DataProcessor:
         plt.show()
         print(f"{class_name} sınıfı için ısı haritası {save_file} konumuna kaydedildi.")
 
-    def plot_class_comparison(self):
-        """
-        Her sınıf için sensör verilerinin ortalamalarını karşılaştırır.
-        """
-        if self.dataset is None:
-            raise ValueError("Veri seti yüklenmemiş. Önce `load_data` çağrılmalı.")
-
-        save_path = "results/dataset"
-        os.makedirs(save_path, exist_ok=True)
-
-        mean_values = []
-        for gesture_class in self.dataset["Gesture_Class"].unique():
-            class_data = self.dataset[self.dataset["Gesture_Class"] == gesture_class].iloc[:, :-1]
-            mean_values.append(class_data.mean(axis=0).values)
-
-        mean_values = np.array(mean_values)
-
-        plt.figure(figsize=(12, 6))
-        for i, class_name in enumerate(self.class_names):
-            plt.plot(range(1, mean_values.shape[1] + 1), mean_values[i], label=class_name)
-
-        plt.title("Sınıf Bazında Ortalama Sensör Verileri")
-        plt.xlabel("Özellik İndeksi")
-        plt.ylabel("Ortalama Değer")
-        plt.legend(loc="upper right")
-        plt.grid(True)
-
-        save_file = os.path.join(save_path, "class_comparison.png")
-        plt.savefig(save_file)
-        plt.show()
-        print(f"Sınıf karşılaştırma grafiği {save_file} konumuna kaydedildi.")
-
     def visualize_each_class(self):
         """Her Gesture_Class için bir örnek seçer ve görselleştirir."""
         if self.dataset is None:
@@ -128,8 +96,5 @@ if __name__ == "__main__":
 
     # Her Gesture_Class için bir örneği görselleştir
     processor.visualize_each_class()
-
-    # Sınıfları karşılaştır
-    processor.plot_class_comparison()
 
     print("\n--- Tüm görselleştirme işlemleri tamamlandı ---")
