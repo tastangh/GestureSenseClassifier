@@ -1,121 +1,151 @@
-import os
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, accuracy_score
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LSTM, Dropout
-from tensorflow.keras.utils import to_categorical
 from sklearn.preprocessing import StandardScaler
-import h2o
-from h2o.estimators import H2OSupportVectorMachineEstimator
+from sklearn.metrics import classification_report, accuracy_score
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 import logging
+import os
 
 # Loglama ayarları
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger()
 
-# H2O.ai başlatma
-h2o.init()
-
 # Dosya yolları
 RAW_DATA_PATH = "dataset/emg_data.csv"
 FEATURES_DATA_PATH = "features_emg_data.csv"
-RESULTS_DIR = "results/model_comparisons"
+RESULTS_DIR = "results/model_comparisons_dynamic_lr"
 
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
-def train_logistic_regression(X_train, X_val, y_train, y_val):
-    model = LogisticRegression(random_state=42, max_iter=500)
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_val)
-    accuracy = accuracy_score(y_val, y_pred)
-    return accuracy, classification_report(y_val, y_pred)
+class LogisticRegressionModel(nn.Module):
+    def __init__(self, input_dim, num_classes):
+        super(LogisticRegressionModel, self).__init__()
+        self.linear = nn.Linear(input_dim, num_classes)
 
-def train_h2o_svm(X_train, X_val, y_train, y_val):
+    def forward(self, x):
+        return self.linear(x)
+
+def train_model(model, criterion, optimizer, scheduler, train_loader, val_loader, num_epochs=100):
     """
-    H2O.ai ile SVM modeli eğitimi.
+    Modeli eğitir ve doğrulama seti üzerinde değerlendirir.
     """
-    # Veriyi H2O çerçevesine dönüştür
-    train_data = pd.DataFrame(X_train)
-    train_data["Label"] = y_train
-    train_h2o = h2o.H2OFrame(train_data)
+    for epoch in range(num_epochs):
+        model.train()
+        total_loss = 0.0
 
-    val_data = pd.DataFrame(X_val)
-    val_data["Label"] = y_val
-    val_h2o = h2o.H2OFrame(val_data)
+        for inputs, labels in train_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            total_loss += loss.item()
 
-    # SVM modeli eğitimi
-    svm_model = H2OSupportVectorMachineEstimator(gamma=0.1, C=1)
-    svm_model.train(x=train_h2o.columns[:-1], y="Label", training_frame=train_h2o)
+        # Doğrulama setinde değerlendirme
+        model.eval()
+        val_accuracy = 0.0
+        val_total = 0
+        val_loss = 0.0
+        with torch.no_grad():
+            for inputs, labels in val_loader:
+                inputs, labels = inputs.to(device), labels.to(device)
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
+                _, preds = torch.max(outputs, 1)
+                val_loss += loss.item()
+                val_accuracy += (preds == labels).sum().item()
+                val_total += labels.size(0)
 
-    # Model değerlendirme
-    performance = svm_model.model_performance(val_h2o)
-    accuracy = performance.accuracy()[0][1]
-    logger.info(f"SVM Doğruluk: {accuracy}")
-    return accuracy, str(performance)
+        val_accuracy /= val_total
+        val_loss /= val_total
 
-def train_lstm(X_train, X_val, y_train, y_val, input_dim):
-    scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_val = scaler.transform(X_val)
-    X_train = X_train.reshape(X_train.shape[0], 1, input_dim)
-    X_val = X_val.reshape(X_val.shape[0], 1, input_dim)
-    y_train = to_categorical(y_train)
-    y_val = to_categorical(y_val)
-    model = Sequential([
-        LSTM(64, input_shape=(1, input_dim), return_sequences=False),
-        Dropout(0.2),
-        Dense(32, activation='relu'),
-        Dense(y_train.shape[1], activation='softmax')
-    ])
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    model.fit(X_train, y_train, epochs=10, batch_size=32, verbose=1)
-    _, accuracy = model.evaluate(X_val, y_val, verbose=0)
-    return accuracy, "LSTM Model değerlendirme başarıyla tamamlandı."
+        logger.info(f"Epoch [{epoch+1}/{num_epochs}] - Loss: {total_loss:.4f} - Val Loss: {val_loss:.4f} - Val Accuracy: {val_accuracy:.4f}")
+        scheduler.step(val_loss)  # ReduceLROnPlateau kullanımı
 
-def load_data_and_split(data_path, label_column="Gesture_Class", test_size=0.2):
+    return model
+
+def prepare_data(X, y, batch_size=32):
+    """
+    Veriyi PyTorch DataLoader formatına dönüştürür.
+    """
+    tensor_X = torch.tensor(X, dtype=torch.float32)
+    tensor_y = torch.tensor(y, dtype=torch.long)
+    dataset = torch.utils.data.TensorDataset(tensor_X, tensor_y)
+    return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+
+def evaluate_scenario(data_path, label_column="Gesture_Class", test_size=0.2, num_epochs=100):
+    """
+    Belirli bir veri seti ile modeli eğitir ve değerlendirir.
+    """
+    logger.info(f"{data_path} yükleniyor...")
     data = pd.read_csv(data_path)
     X = data.drop(columns=[label_column]).values
     y = data[label_column].values
-    return train_test_split(X, y, test_size=test_size, random_state=42)
 
-def evaluate_models(data_path, dataset_name):
-    print(f"\n--- {dataset_name} Veri Seti ile Model Eğitimi ve Değerlendirme ---")
-    X_train, X_val, y_train, y_val = load_data_and_split(data_path)
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=test_size, random_state=42)
+
+    # Normalize veriler
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_val = scaler.transform(X_val)
+
+    # PyTorch DataLoader
+    train_loader = prepare_data(X_train, y_train)
+    val_loader = prepare_data(X_val, y_val)
+
+    # Model oluşturma
     input_dim = X_train.shape[1]
-    
-    # Logistic Regression
-    print("\nLogistic Regression:")
-    lr_acc, lr_report = train_logistic_regression(X_train, X_val, y_train, y_val)
-    print(f"Doğruluk: {lr_acc}\n{lr_report}")
-    
-    # H2O SVM
-    print("\nH2O SVM:")
-    svm_acc, svm_report = train_h2o_svm(X_train, X_val, y_train, y_val)
-    print(f"Doğruluk: {svm_acc}\n{svm_report}")
-    
-    # LSTM
-    print("\nLSTM:")
-    lstm_acc, lstm_report = train_lstm(X_train, X_val, y_train, y_val, input_dim)
-    print(f"Doğruluk: {lstm_acc}\n{lstm_report}")
+    num_classes = len(np.unique(y_train))
+    model = LogisticRegressionModel(input_dim, num_classes).to(device)
 
-    return {
-        "Logistic Regression": lr_acc,
-        "H2O SVM": svm_acc,
-        "LSTM": lstm_acc
-    }
+    # Kayıp fonksiyonu ve optimizasyon
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5, verbose=True)
+
+    # Modeli eğitme
+    logger.info("Model eğitiliyor...")
+    trained_model = train_model(model, criterion, optimizer, scheduler, train_loader, val_loader, num_epochs=num_epochs)
+
+    # Test setinde değerlendirme
+    logger.info("Test seti değerlendirmesi yapılıyor...")
+    val_loader = prepare_data(X_val, y_val)
+    trained_model.eval()
+    test_accuracy = 0.0
+    test_total = 0
+    y_true = []
+    y_pred = []
+    with torch.no_grad():
+        for inputs, labels in val_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = trained_model(inputs)
+            _, preds = torch.max(outputs, 1)
+            test_accuracy += (preds == labels).sum().item()
+            test_total += labels.size(0)
+            y_true.extend(labels.cpu().numpy())
+            y_pred.extend(preds.cpu().numpy())
+
+    test_accuracy /= test_total
+    logger.info(f"Test Accuracy: {test_accuracy:.4f}")
+    logger.info(f"Test Classification Report:\n{classification_report(y_true, y_pred)}")
+    return test_accuracy
 
 def main():
-    print("\n--- Ham Veri (emg_data.csv) Model Değerlendirmesi ---")
-    raw_results = evaluate_models(RAW_DATA_PATH, "Ham Veri")
-    
-    print("\n--- Özellik Çıkarımı (features_emg_data.csv) Model Değerlendirmesi ---")
-    features_results = evaluate_models(FEATURES_DATA_PATH, "Özellik Çıkarımı")
-    
-    print("\n--- SONUÇLAR KARŞILAŞTIRMASI ---")
-    print("Ham Veri Sonuçları:", raw_results)
-    print("Özellik Çıkarımı Sonuçları:", features_results)
+    logger.info("\n--- Ham Veri (emg_data.csv) Model Değerlendirmesi ---")
+    raw_accuracy = evaluate_scenario(RAW_DATA_PATH, num_epochs=100)
+
+    logger.info("\n--- Özellik Çıkarımı (features_emg_data.csv) Model Değerlendirmesi ---")
+    features_accuracy = evaluate_scenario(FEATURES_DATA_PATH, num_epochs=100)
+
+    logger.info("\n--- SONUÇLAR KARŞILAŞTIRMASI ---")
+    logger.info(f"Ham Veri Accuracy: {raw_accuracy}")
+    logger.info(f"Özellik Çıkarımı Accuracy: {features_accuracy}")
 
 if __name__ == "__main__":
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     main()

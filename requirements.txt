@@ -6,3 +6,4 @@ scikit-learn
 PyWavelets
 shap
 seaborn
+torch
