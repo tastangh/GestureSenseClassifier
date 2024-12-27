@@ -1,6 +1,6 @@
 import pandas as pd
 
-# Dosya yollarını belirtin
+# Dosya yolları
 file_paths = [
     "../0.csv",  # İlk dosya
     "../1.csv",  # İkinci dosya
@@ -8,7 +8,7 @@ file_paths = [
     "../3.csv",  # Dördüncü dosya
 ]
 
-# Tüm veriyi saklamak için bir liste
+# Tüm veriyi saklama listesi
 datasets = []
 
 # Dosyaları okuyup sütunları etiketleme
@@ -20,7 +20,7 @@ for file_path in file_paths:
     df.columns = sensor_columns + ["Gesture_Class"]
     datasets.append(df)
 
-# Dosyaları birleştir
+# Dosyaları birleştirme
 combined_df = pd.concat(datasets, ignore_index=True)
 
 # Veriyi karıştırma
