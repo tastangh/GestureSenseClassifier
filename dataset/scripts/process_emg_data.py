@@ -14,7 +14,7 @@ datasets = []
 # Dosyaları okuyup sütunları etiketleme
 for file_path in file_paths:
     df = pd.read_csv(file_path, header=None)
-    sensor_columns = [f"Sensor{sensor_num}_Reading{reading_num}" 
+    sensor_columns = [f"S{sensor_num}_R{reading_num}" 
                       for reading_num in range(1, 9) 
                       for sensor_num in range(1, 9)]
     df.columns = sensor_columns + ["Gesture_Class"]
@@ -32,5 +32,6 @@ shuffled_df.to_csv(output_file, index=False)
 
 # Çıkış bilgisi
 print(f"Karıştırılmış veri '{output_file}' dosyasına kaydedildi.")
+print(f"Toplam satır sayısı: {len(shuffled_df)}")
 print("Karıştırılmış verinin ilk 5 satırı:")
 print(shuffled_df.head())
