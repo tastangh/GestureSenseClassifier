@@ -25,43 +25,30 @@ class DataProcessor:
 
     def plot_40ms_data(self, data_row, class_name):
         """
-        Her sensörün 40 ms boyunca alınan 8 ölçümünü sabit bir çizgi şeklinde gösterir.
+        Her sensörün 40 ms boyunca alınan 8 ölçümünü aynı grafikte gösterir.
         :param data_row: Görselleştirilecek satır
         :param class_name: Sınıf adı (ör. "Taş(0)")
         """
         save_path = "results/dataset"
         os.makedirs(save_path, exist_ok=True)
 
-        # 8 ölçüm, her ölçüm 5 ms arayla
-        x_time = np.linspace(0, 40, 9)  # 9 noktadan oluşuyor, her ölçüm 5 ms arayla
+        x_time = np.linspace(5, 40, 8)  # 200 hz'lık 8 ölçüm noktası
 
-        # 8 sensör için alt grafikler (subplot) oluştur
-        plt.figure(figsize=(16, 12))  # Tüm sensörlerin grafiklerini yerleştirecek kadar geniş bir figür
-
+        plt.figure(figsize=(12, 6))
         for i in range(8):  # 8 sensör
             sensor_data = data_row[i::8].values  # Sensöre ait ölçümler
-            
-            # Her sensör için bir subplot oluştur
-            plt.subplot(4, 2, i + 1)  # 4 satır, 2 sütunluk alt grafikler düzeni
+            plt.plot(x_time, sensor_data, label=f"Sensor {i + 1}")
 
-            # 8 ölçüm, her biri 5 ms süresince sabit
-            for j in range(1, len(x_time)):
-                # Her ölçüm için sabit kalacak şekilde çizim (5 ms boyunca sabit)
-                plt.plot([x_time[j-1], x_time[j]], [sensor_data[j-1], sensor_data[j-1]], label=f"Sensor {i + 1}" if j == 1 else "")
+        plt.title(f"{class_name} Hareketi - 40 ms Ardışık Ölçümleri")
+        plt.xlabel("Zaman (ms)")
+        plt.ylabel("Örnek Değeri")
+        plt.legend(loc="upper right")
+        plt.grid(True)
 
-            # Her sensör için başlık, etiketler ve grid ekle
-            plt.title(f"Sensor {i + 1} - {class_name} Hareketi")
-            plt.xlabel("Zaman (ms)")
-            plt.ylabel("Örnek Değeri")
-            plt.grid(True)
-            plt.tight_layout()  # Alt grafiklerin düzenini sıkıştırarak daha düzgün bir yerleşim sağlar
-
-        # Grafikleri kaydet
-        save_file = os.path.join(save_path, f"{class_name.lower().replace('(', '').replace(')', '').replace(' ', '_')}_40ms_sensores.png")
+        save_file = os.path.join(save_path, f"{class_name.lower().replace('(', '').replace(')', '').replace(' ', '_')}_40ms.png")
         plt.savefig(save_file)
         plt.show()
-        print(f"{class_name} sınıfı için tüm sensörlerin figürü {save_file} konumuna kaydedildi.")
-
+        print(f"{class_name} sınıfı için figür {save_file} konumuna kaydedildi.")
 
     def plot_heatmap(self, data_row, class_name):
         """
