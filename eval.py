@@ -1,137 +1,94 @@
-import numpy as np
+import os
 import pandas as pd
+from sklearn.metrics import classification_report, accuracy_score
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
-import seaborn as sns
-import matplotlib.pyplot as plt
+import pickle
 
-class Evaluator:
+# Sabitler ve dosya yolları
+RAW_FEATURES_PATH = "results/features/raw_features_with_labels.csv"
+FILTERED_FEATURES_PATH = "results/features/filtered_features_with_labels.csv"
+RAW_DATA_PATH = "dataset/emg_data.csv"
+FILTERED_DATA_PATH = "filtered_dataset/emg_filtered_data.csv"
+MODELS_DIR = "results/simple_models"
+
+def load_model(model_path):
     """
-    Farklı veri tiplerini karşılaştırmak için sınıf.
+    Eğitimli modeli dosyadan yükler.
     """
-    def __init__(self, random_state=42):
-        self.random_state = random_state
-        self.model = RandomForestClassifier(random_state=self.random_state)
+    if os.path.exists(model_path):
+        with open(model_path, "rb") as file:
+            model = pickle.load(file)
+        print(f"Model yüklendi: {model_path}")
+        return model
+    else:
+        raise FileNotFoundError(f"Model dosyası bulunamadı: {model_path}")
 
-    def preprocess_data(self, dataset, feature_only=True):
-        """
-        Veriyi bağımsız ve bağımlı değişkenlere ayırır.
-        :param dataset: DataFrame (etiketler son sütunda yer almalı)
-        :param feature_only: Özellik seti mi, ham veri mi kullanılacak
-        :return: X (özellikler), y (etiketler)
-        """
-        if feature_only:
-            X = dataset.iloc[:, :-1].values  # Son sütun hariç
-            y = dataset.iloc[:, -1].values  # Son sütun etiketler
-        else:
-            X = dataset.iloc[:, :-1].values  # Ham veri özellikleri
-            y = dataset.iloc[:, -1].values
-        return X, y
+def evaluate_on_test_data(model, X_test, y_test, label):
+    """
+    Test seti üzerinde modeli değerlendirir.
+    """
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"\n{label} - Test Doğruluk: {accuracy}")
+    print(f"{label} - Test Sınıflandırma Raporu:\n{classification_report(y_test, y_pred)}")
+    return accuracy
 
-    def evaluate(self, X, y, test_size=0.2):
-        """
-        Veriyi eğitir ve değerlendirir.
-        :param X: Özellikler
-        :param y: Etiketler
-        :param test_size: Test set oranı
-        :return: Değerlendirme metrikleri
-        """
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=self.random_state)
-
-        # Modeli eğit
-        self.model.fit(X_train, y_train)
-
-        # Tahmin yap
-        y_pred = self.model.predict(X_test)
-
-        # Metrikler
-        accuracy = accuracy_score(y_test, y_pred)
-        f1 = f1_score(y_test, y_pred, average='weighted')
-        report = classification_report(y_test, y_pred)
-        cm = confusion_matrix(y_test, y_pred)
-
-        return accuracy, f1, report, cm
-
-    def plot_confusion_matrix(self, cm, class_names, title="Confusion Matrix"):
-        """
-        Karışıklık matrisi çizer.
-        :param cm: Karışıklık matrisi
-        :param class_names: Sınıf isimleri
-        :param title: Grafik başlığı
-        """
-        plt.figure(figsize=(8, 6))
-        sns.heatmap(cm, annot=True, fmt='d', cmap="Blues", xticklabels=class_names, yticklabels=class_names)
-        plt.title(title)
-        plt.xlabel("Predicted")
-        plt.ylabel("True")
-        plt.show()
+def main():
+    print("\n--- Test Setinde 4 Senaryonun Karşılaştırması Başlıyor ---")
+    
+    # Modellerin yolları
+    raw_model_path = os.path.join(MODELS_DIR, "Ham Veri_model.pkl")
+    filtered_model_path = os.path.join(MODELS_DIR, "Filtrelenmiş Veri_model.pkl")
+    raw_features_model_path = os.path.join(MODELS_DIR, "Ham Özellik Çıkarımı_model.pkl")
+    filtered_features_model_path = os.path.join(MODELS_DIR, "Filtrelenmiş Özellik Çıkarımı_model.pkl")
+    
+    # Test setini oluşturma
+    print("\n--- Veriler Yükleniyor ---")
+    raw_X_train, raw_X_test, raw_y_train, raw_y_test = train_test_split(
+        pd.read_csv(RAW_DATA_PATH).drop(columns=["Gesture_Class"]),
+        pd.read_csv(RAW_DATA_PATH)["Gesture_Class"],
+        test_size=0.2,
+        random_state=42
+    )
+    
+    filtered_X_train, filtered_X_test, filtered_y_train, filtered_y_test = train_test_split(
+        pd.read_csv(FILTERED_DATA_PATH).drop(columns=["Gesture_Class"]),
+        pd.read_csv(FILTERED_DATA_PATH)["Gesture_Class"],
+        test_size=0.2,
+        random_state=42
+    )
+    
+    raw_features_df = pd.read_csv(RAW_FEATURES_PATH)
+    raw_features_X_train, raw_features_X_test, raw_features_y_train, raw_features_y_test = train_test_split(
+        raw_features_df.drop(columns=["Label"]),
+        raw_features_df["Label"],
+        test_size=0.2,
+        random_state=42
+    )
+    
+    filtered_features_df = pd.read_csv(FILTERED_FEATURES_PATH)
+    filtered_features_X_train, filtered_features_X_test, filtered_features_y_train, filtered_features_y_test = train_test_split(
+        filtered_features_df.drop(columns=["Label"]),
+        filtered_features_df["Label"],
+        test_size=0.2,
+        random_state=42
+    )
+    
+    # Modelleri yükleme
+    print("\n--- Modeller Yükleniyor ---")
+    raw_model = load_model(raw_model_path)
+    filtered_model = load_model(filtered_model_path)
+    raw_features_model = load_model(raw_features_model_path)
+    filtered_features_model = load_model(filtered_features_model_path)
+    
+    # Test setinde değerlendirme
+    print("\n--- Test Setinde Değerlendirme ---")
+    evaluate_on_test_data(raw_model, raw_X_test, raw_y_test, label="Ham Veri Modeli")
+    evaluate_on_test_data(filtered_model, filtered_X_test, filtered_y_test, label="Filtrelenmiş Veri Modeli")
+    evaluate_on_test_data(raw_features_model, raw_features_X_test, raw_features_y_test, label="Ham Özellik Çıkarımı Modeli")
+    evaluate_on_test_data(filtered_features_model, filtered_features_X_test, filtered_features_y_test, label="Filtrelenmiş Özellik Çıkarımı Modeli")
+    
+    print("\n--- Test Değerlendirmesi Tamamlandı ---")
 
 if __name__ == "__main__":
-    from data_processor import DataProcessor
-    from feature_extractor import FeatureExtractor
-
-    # Veri Yolları
-    raw_data_path = "dataset/emg_data.csv"
-    filtered_data_path = "filtered_dataset/emg_filtered_data.csv"
-
-    # DataProcessor Nesnelerini Kullanarak Verileri Yükle
-    class_names = ["Taş(0)", "Kağıt(1)", "Makas(2)", "OK(3)"]
-
-    raw_processor = DataProcessor(class_names)
-    raw_processor.set_data_path(raw_data_path)
-    raw_dataset = raw_processor.load_data()
-
-    filtered_processor = DataProcessor(class_names)
-    filtered_processor.set_data_path(filtered_data_path)
-    filtered_dataset = filtered_processor.load_data()
-
-    # FeatureExtractor Nesnesini Kullanarak Özellik Çıkar
-    extractor = FeatureExtractor(window_size=8)
-
-    print("Filtrelenmemiş veri için özellikler çıkarılıyor...")
-    raw_features_df = extractor.extract_features(raw_dataset)
-
-    print("Filtrelenmiş veri için özellikler çıkarılıyor...")
-    filtered_features_df = extractor.extract_features(filtered_dataset)
-
-    # Evaluator Nesnesini Kullan
-    evaluator = Evaluator()
-
-    # Ham Verilerle Değerlendirme
-    print("\nHam veriler üzerinde değerlendirme...")
-    raw_X, raw_y = evaluator.preprocess_data(raw_dataset, feature_only=False)
-    raw_accuracy, raw_f1, raw_report, raw_cm = evaluator.evaluate(raw_X, raw_y)
-    print("Doğruluk (Accuracy):", raw_accuracy)
-    print("F1 Skoru:", raw_f1)
-    print(raw_report)
-    evaluator.plot_confusion_matrix(raw_cm, class_names, title="Confusion Matrix (Raw Data)")
-
-    # Filtrelenmiş Verilerle Değerlendirme
-    print("\nFiltrelenmiş veriler üzerinde değerlendirme...")
-    filtered_X, filtered_y = evaluator.preprocess_data(filtered_dataset, feature_only=False)
-    filtered_accuracy, filtered_f1, filtered_report, filtered_cm = evaluator.evaluate(filtered_X, filtered_y)
-    print("Doğruluk (Accuracy):", filtered_accuracy)
-    print("F1 Skoru:", filtered_f1)
-    print(filtered_report)
-    evaluator.plot_confusion_matrix(filtered_cm, class_names, title="Confusion Matrix (Filtered Data)")
-
-    # Filtrelenmemiş Özelliklerle Değerlendirme
-    print("\nFiltrelenmemiş özellikler üzerinde değerlendirme...")
-    raw_feat_X, raw_feat_y = evaluator.preprocess_data(raw_features_df, feature_only=True)
-    raw_feat_accuracy, raw_feat_f1, raw_feat_report, raw_feat_cm = evaluator.evaluate(raw_feat_X, raw_feat_y)
-    print("Doğruluk (Accuracy):", raw_feat_accuracy)
-    print("F1 Skoru:", raw_feat_f1)
-    print(raw_feat_report)
-    evaluator.plot_confusion_matrix(raw_feat_cm, class_names, title="Confusion Matrix (Raw Features)")
-
-    # Filtrelenmiş Özelliklerle Değerlendirme
-    print("\nFiltrelenmiş özellikler üzerinde değerlendirme...")
-    filtered_feat_X, filtered_feat_y = evaluator.preprocess_data(filtered_features_df, feature_only=True)
-    filtered_feat_accuracy, filtered_feat_f1, filtered_feat_report, filtered_feat_cm = evaluator.evaluate(filtered_feat_X, filtered_feat_y)
-    print("Doğruluk (Accuracy):", filtered_feat_accuracy)
-    print("F1 Skoru:", filtered_feat_f1)
-    print(filtered_feat_report)
-    evaluator.plot_confusion_matrix(filtered_feat_cm, class_names, title="Confusion Matrix (Filtered Features)")
-
-    print("\n--- Tüm değerlendirmeler tamamlandı ---")
+    main()

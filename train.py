@@ -1,116 +1,75 @@
 import os
 import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, accuracy_score
 
-from data_processor import DataProcessor
-from feature_extractor import FeatureExtractor
-from feature_selector import FeatureSelector
-
-
 # Sabitler ve dosya yolları
+RAW_FEATURES_PATH = "results/features/raw_features_with_labels.csv"
+FILTERED_FEATURES_PATH = "results/features/filtered_features_with_labels.csv"
 RAW_DATA_PATH = "dataset/emg_data.csv"
-FILTERED_DATA_PATH = "filtered_dataset/emg_filtered_data.csv"
-RESULTS_DIR = "results"
-FEATURES_DIR = os.path.join(RESULTS_DIR, "features")
-MODELS_DIR = os.path.join(RESULTS_DIR, "models")
+FILTERED_DATA_PATH = "filtered_emg_data_frequency_domain.csv"
+RESULTS_DIR = "results/simple_models"
 
-os.makedirs(FEATURES_DIR, exist_ok=True)
-os.makedirs(MODELS_DIR, exist_ok=True)
+os.makedirs(RESULTS_DIR, exist_ok=True)
 
-
-def train_and_save_model(X_train, y_train, output_path, model_params=None):
+def train_and_evaluate_simple_model(X_train, X_val, y_train, y_val, model_name):
     """
-    Verilen eğitim verileriyle bir model eğitir ve modeli dosyaya kaydeder.
-    :param X_train: Eğitim özellik matrisi
-    :param y_train: Eğitim hedef değerleri
-    :param output_path: Modelin kaydedileceği dosya yolu
-    :param model_params: Model parametreleri (opsiyonel)
+    Logistic Regression ile modeli eğitir ve değerlendirir.
     """
-    print(f"Model {output_path} için eğitiliyor...")
-    if model_params is None:
-        model_params = {"random_state": 42, "n_estimators": 100}
-    model = RandomForestClassifier(**model_params)
+    print(f"\n--- {model_name} modeli eğitiliyor ---")
+    
+    # Basit model tanımı (Logistic Regression)
+    model = LogisticRegression(random_state=42, max_iter=500)
     model.fit(X_train, y_train)
+    
+    # Model değerlendirme
+    y_pred = model.predict(X_val)
+    accuracy = accuracy_score(y_val, y_pred)
+    print(f"{model_name} Modeli Doğruluk: {accuracy}")
+    print(f"{model_name} Modeli Sınıflandırma Raporu:\n{classification_report(y_val, y_pred)}")
+    
+    return model, accuracy
 
-    # Modelin kaydedilmesi
-    pd.to_pickle(model, output_path)
-    print(f"Model kaydedildi: {output_path}")
-    return model
-
-
-def evaluate_model(model, X_val, y_val, label):
+def load_data_and_split(data_path, label_column="Label", test_size=0.2):
     """
-    Modeli doğrulama veri seti üzerinde değerlendirir.
-    :param model: Eğitimli model
-    :param X_val: Doğrulama özellik matrisi
-    :param y_val: Doğrulama hedef değerleri
-    :param label: Değerlendirme raporu için etiket
+    Veriyi yükler ve eğitim/test olarak böler.
     """
-    val_predictions = model.predict(X_val)
-    accuracy = accuracy_score(y_val, val_predictions)
-    print(f"\n{label} - Doğruluk: {accuracy}")
-    print(f"{label} - Sınıflandırma Raporu:\n", classification_report(y_val, val_predictions))
-    return accuracy
-
+    data = pd.read_csv(data_path)
+    X = data.drop(columns=[label_column])
+    y = data[label_column]
+    return train_test_split(X, y, test_size=test_size, random_state=42)
 
 def main():
-    # 1. Veri yükleme
-    class_names = ["Taş(0)", "Kağıt(1)", "Makas(2)", "OK(3)"]
+    print("\n--- 4 Senaryonun Karşılaştırması Başlıyor ---")
+    
+    # 1. Senaryo: Ham Veri
+    print("\n[1/4] Ham Veri ile Model Eğitimi ve Değerlendirme")
+    raw_X_train, raw_X_val, raw_y_train, raw_y_val = load_data_and_split(RAW_DATA_PATH, label_column="Gesture_Class")
+    raw_model, raw_accuracy = train_and_evaluate_simple_model(raw_X_train, raw_X_val, raw_y_train, raw_y_val, "Ham Veri")
 
-    # Ham veri
-    raw_processor = DataProcessor(class_names)
-    raw_processor.set_data_path(RAW_DATA_PATH)
-    raw_dataset = raw_processor.load_data()
+    # 2. Senaryo: Filtrelenmiş Veri
+    print("\n[2/4] Filtrelenmiş Veri ile Model Eğitimi ve Değerlendirme")
+    filtered_X_train, filtered_X_val, filtered_y_train, filtered_y_val = load_data_and_split(FILTERED_DATA_PATH, label_column="Gesture_Class")
+    filtered_model, filtered_accuracy = train_and_evaluate_simple_model(filtered_X_train, filtered_X_val, filtered_y_train, filtered_y_val, "Filtrelenmiş Veri")
 
-    # Filtrelenmiş veri
-    filtered_processor = DataProcessor(class_names)
-    filtered_processor.set_data_path(FILTERED_DATA_PATH)
-    filtered_dataset = filtered_processor.load_data()
+    # 3. Senaryo: Ham Özellik Çıkarımı
+    print("\n[3/4] Ham Özellik Çıkarımı ile Model Eğitimi ve Değerlendirme")
+    raw_features_X_train, raw_features_X_val, raw_features_y_train, raw_features_y_val = load_data_and_split(RAW_FEATURES_PATH)
+    raw_features_model, raw_features_accuracy = train_and_evaluate_simple_model(raw_features_X_train, raw_features_X_val, raw_features_y_train, raw_features_y_val, "Ham Özellik Çıkarımı")
 
-    # 2. Özellik çıkarımı
-    extractor = FeatureExtractor(window_size=8)
-
-    print("Ham veri için özellikler çıkarılıyor...")
-    raw_features_df = extractor.extract_features(raw_dataset)
-    raw_features_path = os.path.join(FEATURES_DIR, "raw_features_with_labels.csv")
-    raw_features_df.to_csv(raw_features_path, index=False)
-
-    print("Filtrelenmiş veri için özellikler çıkarılıyor...")
-    filtered_features_df = extractor.extract_features(filtered_dataset)
-    filtered_features_path = os.path.join(FEATURES_DIR, "filtered_features_with_labels.csv")
-    filtered_features_df.to_csv(filtered_features_path, index=False)
-
-    # 3. Özellik seçimi ve ağırlıklandırma
-    raw_selector = FeatureSelector(raw_features_df, output_dir=os.path.join(RESULTS_DIR, "feature_selection/raw"))
-    filtered_selector = FeatureSelector(filtered_features_df, output_dir=os.path.join(RESULTS_DIR, "feature_selection/filtered"))
-
-    print("Ham veri için ağırlıklandırılmış özellikler seçiliyor...")
-    raw_weights = raw_selector.compute_feature_weights(method="f_classif")
-    raw_features_weighted = raw_features_df[raw_weights["Feature"].values]
-
-    print("Filtrelenmiş veri için ağırlıklandırılmış özellikler seçiliyor...")
-    filtered_weights = filtered_selector.compute_feature_weights(method="f_classif")
-    filtered_features_weighted = filtered_features_df[filtered_weights["Feature"].values]
-
-    # 4. Eğitim ve doğrulama için veri bölme
-    splits = {}
-    splits["raw"] = train_test_split(raw_features_df.drop(columns=["Label"]), raw_features_df["Label"], test_size=0.2, random_state=42)
-    splits["filtered"] = train_test_split(filtered_features_df.drop(columns=["Label"]), filtered_features_df["Label"], test_size=0.2, random_state=42)
-    splits["raw_weighted"] = train_test_split(raw_features_weighted, raw_features_df["Label"], test_size=0.2, random_state=42)
-    splits["filtered_weighted"] = train_test_split(filtered_features_weighted, filtered_features_df["Label"], test_size=0.2, random_state=42)
-
-    # 5. Modellerin eğitimi ve değerlendirmesi
-    for key, (X_train, X_val, y_train, y_val) in splits.items():
-        print(f"\n--- {key.upper()} için eğitim başlıyor ---")
-        model_path = os.path.join(MODELS_DIR, f"{key}_model.pkl")
-        model = train_and_save_model(X_train, y_train, model_path)
-        evaluate_model(model, X_val, y_val, label=f"{key.upper()} Modeli")
-
-    print("\n--- Tüm Eğitim İşlemleri Tamamlandı ---")
-
+    # 4. Senaryo: Filtrelenmiş Özellik Çıkarımı
+    print("\n[4/4] Filtrelenmiş Özellik Çıkarımı ile Model Eğitimi ve Değerlendirme")
+    filtered_features_X_train, filtered_features_X_val, filtered_features_y_train, filtered_features_y_val = load_data_and_split(FILTERED_FEATURES_PATH)
+    filtered_features_model, filtered_features_accuracy = train_and_evaluate_simple_model(filtered_features_X_train, filtered_features_X_val, filtered_features_y_train, filtered_features_y_val, "Filtrelenmiş Özellik Çıkarımı")
+    
+    # Sonuçların Özeti
+    print("\n--- SONUÇLAR ---")
+    print(f"Ham Veri Modeli Doğruluk: {raw_accuracy}")
+    print(f"Filtrelenmiş Veri Modeli Doğruluk: {filtered_accuracy}")
+    print(f"Ham Özellik Çıkarımı Modeli Doğruluk: {raw_features_accuracy}")
+    print(f"Filtrelenmiş Özellik Çıkarımı Modeli Doğruluk: {filtered_features_accuracy}")
+    print("\n--- Karşılaştırma Tamamlandı ---")
 
 if __name__ == "__main__":
     main()
