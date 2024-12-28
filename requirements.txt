@@ -1,9 +1,0 @@
-tensorflow
-pandas
-numpy 
-matplotlib
-scikit-learn
-PyWavelets
-shap
-seaborn
-torch
