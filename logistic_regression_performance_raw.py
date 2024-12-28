@@ -1,12 +1,14 @@
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 import pandas as pd
 
-def evaluate_model(y_true, y_pred):
+def evaluate_model(y_true, y_pred, title, save_path):
     """
-    Evaluate the model's performance with various metrics.
+    Evaluate the model's performance with various metrics and visualize the confusion matrix.
     """
     accuracy = accuracy_score(y_true, y_pred)
     precision = precision_score(y_true, y_pred, average='weighted')
@@ -20,6 +22,15 @@ def evaluate_model(y_true, y_pred):
     print(f"F1 Score: {f1:.4f}")
     print("Confusion Matrix:")
     print(conf_matrix)
+
+    # Visualize and save the confusion matrix
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=set(y_true), yticklabels=set(y_true))
+    plt.title(f"{title} - Confusion Matrix")
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.savefig(save_path)
+    plt.show()
 
 def load_raw_data(*files):
     """
@@ -60,10 +71,10 @@ if __name__ == "__main__":
     print("\nValidating the model...")
     y_val_pred = model.predict(X_val)
     print("Validation Performance:")
-    evaluate_model(y_val, y_val_pred)
+    evaluate_model(y_val, y_val_pred, "Validation", "validation_confusion_matrix_raw.png")
 
     # Step 7: Test the model
     print("\nTesting the model...")
     y_test_pred = model.predict(X_test)
     print("Test Performance:")
-    evaluate_model(y_test, y_test_pred)
+    evaluate_model(y_test, y_test_pred, "Test", "test_confusion_matrix_raw.png")
