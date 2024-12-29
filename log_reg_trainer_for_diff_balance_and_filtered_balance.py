@@ -95,26 +95,29 @@ if __name__ == "__main__":
     balanced_data = pd.read_csv("./dataset/Balanced_EMG_data.csv")
 
     # LogisticRegressionTrainer sınıflarını başlat
-    print("Dengelenmemiş Veri Seti ile Eğitim ve Değerlendirme:")
-    trainer_original = LogisticRegressionTrainer(filtered_data, target_column="class")
-    X_train, X_val, X_test, y_train, y_val, y_test = trainer_original.preprocess_data()
-    results_original = trainer_original.train_and_evaluate(X_train, X_val, X_test, y_train, y_val, y_test)
-
     print("\nDengelenmiş Veri Seti ile Eğitim ve Değerlendirme:")
     trainer_balanced = LogisticRegressionTrainer(balanced_data, target_column="class")
     X_train_bal, X_val_bal, X_test_bal, y_train_bal, y_val_bal, y_test_bal = trainer_balanced.preprocess_data()
     results_balanced = trainer_balanced.train_and_evaluate(X_train_bal, X_val_bal, X_test_bal, y_train_bal, y_val_bal, y_test_bal)
+    
+    print("dengelenmiş filtrelenmiş  Veri Seti ile Eğitim ve Değerlendirme:")
+    trainer_original = LogisticRegressionTrainer(filtered_data, target_column="class")
+    X_train, X_val, X_test, y_train, y_val, y_test = trainer_original.preprocess_data()
+    results_original = trainer_original.train_and_evaluate(X_train, X_val, X_test, y_train, y_val, y_test)
+
 
     # Başarıları özetle ve yazdır
     print("\n--- SONUÇLAR ---")
-    print("dengelenmiş filtrelenmiş Veri Seti:")
-    print(f"Validation Accuracy: {results_original['val_accuracy']:.2f}")
-    print(f"Test Accuracy: {results_original['test_accuracy']:.2f}")
-    print("Confusion Matrix (dengelenmiş filtrelenmiş):")
-    trainer_original.plot_confusion_matrix(results_original['confusion_matrix'], classes=np.unique(y_test), title="Confusion Matrix (dengelenmiş filtrelenmiş)")
 
     print("\nDengelenmiş Veri Seti:")
     print(f"Validation Accuracy: {results_balanced['val_accuracy']:.2f}")
     print(f"Test Accuracy: {results_balanced['test_accuracy']:.2f}")
     print("Confusion Matrix (Dengelenmiş):")
     trainer_balanced.plot_confusion_matrix(results_balanced['confusion_matrix'], classes=np.unique(y_test_bal), title="Confusion Matrix (Dengelenmiş)")
+
+    print("dengelenmiş filtrelenmiş Veri Seti:")
+    print(f"Validation Accuracy: {results_original['val_accuracy']:.2f}")
+    print(f"Test Accuracy: {results_original['test_accuracy']:.2f}")
+    print("Confusion Matrix (dengelenmiş filtrelenmiş):")
+    trainer_original.plot_confusion_matrix(results_original['confusion_matrix'], classes=np.unique(y_test), title="Confusion Matrix (dengelenmiş filtrelenmiş)")
+
