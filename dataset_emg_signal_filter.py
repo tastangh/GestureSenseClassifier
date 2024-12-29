@@ -94,7 +94,7 @@ class EMGSignalProcessor:
 
 if __name__ == "__main__":
     # Dengelenmiş veri setini yükle
-    file_path = "./dataset/Balanced_EMG_data.csv"
+    file_path = "./dataset/EMG-data.csv"
     data = pd.read_csv(file_path)
 
     # EMG kanalları
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     )
 
     # Filtrelenmiş veriyi kaydet
-    processor.save_filtered_data("./dataset/filtered_balanced_emg_data.csv")
+    processor.save_filtered_data("./dataset/filtered_emg_data.csv")
 
     # Orijinal ve filtrelenmiş veriyi görselleştir
     processor.visualize_filtered_data("./dataset/filtered_emg_visualization.png", start=0, end=1000)

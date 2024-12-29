@@ -15,7 +15,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # 1. Zaman Serisi Filtreleme (Düşük Geçiren Filtre)
-def low_pass_filter(data, cutoff=0.1, fs=100, order=4):
+def low_pass_filter(data, cutoff=10, fs=1000, order=4):
     nyquist = 0.5 * fs
     normal_cutoff = cutoff / nyquist
     b, a = butter(order, normal_cutoff, btype="low", analog=False)
@@ -47,16 +47,16 @@ def extract_features(data, window_size=200):
     return np.array(features), np.array(labels)
 
 # 3. Veri Yükleme ve Hazırlık
-data = pd.read_csv("dataset/EMG-data.csv")  # Dataset yolunu güncelleyin
-# for col in [f"channel{i}" for i in range(1, 9)]:
-#     data[col] = low_pass_filter(data[col].values)  # Düşük geçiren filtre
+data = pd.read_csv("../dataset/EMG-data.csv")  # Dataset yolunu güncelleyin
+for col in [f"channel{i}" for i in range(1, 9)]:
+    data[col] = low_pass_filter(data[col].values)  # Düşük geçiren filtre
 
 # Özellik çıkarımı
 features, labels = extract_features(data)
 
 # # Veri dengesizliğini dengelemek için SMOTE
-# smote = SMOTE(random_state=42)
-# features, labels = smote.fit_resample(features, labels)
+smote = SMOTE(random_state=42)
+features, labels = smote.fit_resample(features, labels)
 
 # Eğitim ve test setine bölme
 X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, stratify=labels, random_state=42)

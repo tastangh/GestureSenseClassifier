@@ -13,7 +13,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # 1. Veri Yükleme
-data = pd.read_csv("dataset/EMG-data.csv")  # Dataset yolunu güncelleyin
+data = pd.read_csv("../dataset/EMG-data.csv")  # Dataset yolunu güncelleyin
 
 # 2. Ham Özellikler: Sadece EMG Kanalları Kullanımı
 X = data[[f"channel{i}" for i in range(1, 9)]].values  # Sadece EMG kanalları
