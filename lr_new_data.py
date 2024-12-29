@@ -9,12 +9,12 @@ from scipy.signal import butter, lfilter
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# 1. Zaman Serisi Filtreleme (Düşük Geçiren Filtre)
-def low_pass_filter(data, cutoff=50, fs=1000, order=4):
-    nyquist = 0.5 * fs
-    normal_cutoff = cutoff / nyquist
-    b, a = butter(order, normal_cutoff, btype="low", analog=False)
-    return lfilter(b, a, data)
+# # 1. Zaman Serisi Filtreleme (Düşük Geçiren Filtre)
+# def low_pass_filter(data, cutoff=50, fs=1000, order=4):
+#     nyquist = 0.5 * fs
+#     normal_cutoff = cutoff / nyquist
+#     b, a = butter(order, normal_cutoff, btype="low", analog=False)
+#     return lfilter(b, a, data)
 
 # 2. Gelişmiş Özellik Çıkarma Fonksiyonu
 def advanced_feature_extraction(window):
@@ -49,9 +49,9 @@ data = pd.read_csv("dataset/EMG-data.csv")  # Dataset yolunu güncelleyin
 # 'label' sütununu veri setinden çıkarın
 data = data.drop(columns=["label"])
 
-# EMG sinyallerine düşük geçiren filtre uygulama
-for col in [f"channel{i}" for i in range(1, 9)]:
-    data[col] = low_pass_filter(data[col].values)
+# # EMG sinyallerine düşük geçiren filtre uygulama
+# for col in [f"channel{i}" for i in range(1, 9)]:
+#     data[col] = low_pass_filter(data[col].values)
 
 # Özellik çıkarımı
 features, labels = extract_features(data)
