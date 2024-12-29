@@ -30,7 +30,7 @@ def main(file_path):
     # Filtreleme işlemi
     print("Tüm kanallar için band geçiren filtre uygulanıyor...")
     filter_processor = DatasetFilter(data, channels, sampling_rate=1000)
-    filter_processor.filter_all_channels(filter_type="band", cutoff=(20, 450), order=4)
+    filter_processor.filter_all_channels(filter_type="band", cutoff=(0.1, 499), order=4)
     filtered_data = filter_processor.get_filtered_data()
 
     # Grafikler
