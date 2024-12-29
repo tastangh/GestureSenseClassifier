@@ -1,5 +1,1 @@
-tensorflow
-pandas
-numpy 
-matplotlib
-scikit-learn
+pip install pandas numpy scikit-learn imbalanced-learn

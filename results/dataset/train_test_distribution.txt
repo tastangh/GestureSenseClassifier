@@ -1,5 +1,0 @@
-Eğitim ve Test Sınıf Dağılımı:
-  Taş(0)(Sınıf) : 1958 (Eğitim Data Sayısı) 952 (Test Data Sayısı)
-Kağıt(1)(Sınıf) : 1907 (Eğitim Data Sayısı) 996 (Test Data Sayısı)
-Makas(2)(Sınıf) : 1985 (Eğitim Data Sayısı) 958 (Test Data Sayısı)
-   OK(3)(Sınıf) : 1974 (Eğitim Data Sayısı) 948 (Test Data Sayısı)
