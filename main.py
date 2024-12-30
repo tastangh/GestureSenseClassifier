@@ -18,6 +18,9 @@ from decisiontree_trainer import DecisionTreeTrainer
 from lstm_trainer import LSTMTrainer
 from log_reg_trainer import LogRegTrainer
 
+# Save function
+from save_results import save_results_to_excel
+
 class ModelType(Enum):
     
     LOGISTIC_REGRESSION = "LogisticRegression"
@@ -40,6 +43,9 @@ def run_model(model_type, X_train, y_train, X_test, y_test, output_dir):
         y_pred = trainer.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
         print(f"Test Doğruluğu: {accuracy * 100:.2f}%")
+        
+        save_results_to_excel(output_dir, "LogisticRegression", {"max_iter": 100}, trainer.train_accuracy)
+
 
     elif model_type == ModelType.DECISION_TREE:
         print("Decision Tree modeli eğitiliyor...")
@@ -50,6 +56,9 @@ def run_model(model_type, X_train, y_train, X_test, y_test, output_dir):
         y_pred_dt = dt_trainer.predict(X_test)
         accuracy_dt = accuracy_score(y_test, y_pred_dt)
         print(f"Decision Tree Test Doğruluğu: {accuracy_dt * 100:.2f}%")
+        
+        save_results_to_excel(output_dir, "DecisionTree", {"max_depth": 5}, dt_trainer.train_accuracy)
+
 
     elif model_type == ModelType.LSTM:
         print("LSTM modeli için veri hazırlanıyor...")
@@ -68,10 +77,9 @@ def run_model(model_type, X_train, y_train, X_test, y_test, output_dir):
         accuracy_lstm = accuracy_score(y_test, y_pred_lstm)
         print(f"LSTM Test Doğruluğu: {accuracy_lstm * 100:.2f}%")
 
-        lstm_trainer.plot_metrics()
+        save_results_to_excel(output_dir, "LSTM", {"lstm_units": 64, "epochs": 10, "batch_size": 32}, lstm_trainer.history.history['accuracy'][-1])
 
-    elif model_type == ModelType.SVM:
-        print("SVM")
+        lstm_trainer.plot_metrics()
         
     else:
         print("Geçersiz model türü seçildi!")
@@ -142,10 +150,14 @@ def main(file_path, selected_model):
     print(f"Model eğitimi ve değerlendirme başarıyla tamamlandı. Sonuçlar '{output_dir}' klasörüne kaydedildi.")
 
 if __name__ == "__main__":
-    dataset_path = "dataset/EMG-data.csv"  # Dataset yolunu güncelleyin
+    
+    dataset_path = "dataset/EMG-data.csv" 
     
     selected_model = ModelType.LOGISTIC_REGRESSION
     #selected_model = ModelType.LSTM
     #selected_model = ModelType.DECISION_TREE
+    #selected_model = ModelType.ANN
+    #selected_model = ModelType.RANDOM_FOREST
+    #selected_model = ModelType.SVM
     
     main(dataset_path, selected_model=selected_model)
