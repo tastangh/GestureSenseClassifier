@@ -1,28 +1,37 @@
 import pandas as pd
 
-def save_results_to_excel(output_dir, model_name, model_params, train_accuracy):
+def save_results_to_excel(output_dir, model_name, model_params, train_loss, train_accuracy, val_loss, val_accuracy):
     """
     Model sonuçlarını bir Excel dosyasına kaydeder.
     :param output_dir: Çıktı dosyalarının kaydedileceği klasör
     :param model_name: Modelin adı (örneğin, 'LogisticRegression')
     :param model_params: Modelin parametreleri (sözlük formatında)
+    :param train_loss: Eğitim kaybı
     :param train_accuracy: Eğitim doğruluğu
+    :param val_loss: Doğrulama kaybı
+    :param val_accuracy: Doğrulama doğruluğu
     """
     file_path = f"{output_dir}/model_results.xlsx"
     
+    # Yeni sonuçlar için bir veri çerçevesi oluştur
     new_entry = {
         "Model Name": model_name,
         "Model Parameters": str(model_params),
-        "Training Accuracy": train_accuracy
+        "Training Loss": train_loss,
+        "Training Accuracy": train_accuracy,
+        "Validation Loss": val_loss,
+        "Validation Accuracy": val_accuracy
     }
     new_df = pd.DataFrame([new_entry])
     
+    # Eğer dosya zaten varsa, eski verileri yükle ve yeni veriyi ekle
     try:
         existing_df = pd.read_excel(file_path)
         updated_df = pd.concat([existing_df, new_df], ignore_index=True)
     except FileNotFoundError:
         updated_df = new_df
     
+    # Sonuçları Excel dosyasına kaydet
     updated_df.to_excel(file_path, index=False)
     print(f"Sonuçlar '{file_path}' dosyasına kaydedildi.")
 

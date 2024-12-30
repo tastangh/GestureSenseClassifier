@@ -17,6 +17,9 @@ from sklearn.metrics import accuracy_score
 from decisiontree_trainer import DecisionTreeTrainer
 from lstm_trainer import LSTMTrainer
 from log_reg_trainer import LogRegTrainer
+from randomforest_trainer import RandomForestTrainer
+from svm_trainer import SVMTrainer
+from ann_trainer import ANNTrainer
 
 # Save function
 from save_results import save_results_to_excel
@@ -28,15 +31,16 @@ class ModelType(Enum):
     RANDOM_FOREST = "RandomForest"
     LSTM = "LSTM"
     SVM = "SVM"
+    
     # Artificial Neural Networks - Yapay Sinir Ağları
     ANN = "ANN"
     
     
-def run_model(model_type, X_train, y_train, X_test, y_test, output_dir):
+def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output_dir):
     
     if model_type == ModelType.LOGISTIC_REGRESSION:
         print("Lojistik regresyon modeli eğitiliyor...")
-        trainer = LogRegTrainer(max_iter=100)
+        trainer = LogRegTrainer(model_params["max_iter"])
         trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
 
         print("Model değerlendiriliyor...")
@@ -44,12 +48,11 @@ def run_model(model_type, X_train, y_train, X_test, y_test, output_dir):
         accuracy = accuracy_score(y_test, y_pred)
         print(f"Test Doğruluğu: {accuracy * 100:.2f}%")
         
-        save_results_to_excel(output_dir, "LogisticRegression", {"max_iter": 100}, trainer.train_accuracy)
-
+        save_results_to_excel(output_dir, "LogisticRegression", model_params,trainer.train_loss, trainer.train_accuracy, trainer.val_loss, trainer.val_accuracy)
 
     elif model_type == ModelType.DECISION_TREE:
         print("Decision Tree modeli eğitiliyor...")
-        dt_trainer = DecisionTreeTrainer(max_depth=5)
+        dt_trainer = DecisionTreeTrainer(model_params["max_depth"])
         dt_trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
 
         print("Decision Tree modeli değerlendiriliyor...")
@@ -57,34 +60,133 @@ def run_model(model_type, X_train, y_train, X_test, y_test, output_dir):
         accuracy_dt = accuracy_score(y_test, y_pred_dt)
         print(f"Decision Tree Test Doğruluğu: {accuracy_dt * 100:.2f}%")
         
-        save_results_to_excel(output_dir, "DecisionTree", {"max_depth": 5}, dt_trainer.train_accuracy)
-
+        save_results_to_excel(output_dir, "DecisionTree", model_params, dt_trainer.train_loss, dt_trainer.train_accuracy, dt_trainer.val_loss, dt_trainer.val_accuracy)
 
     elif model_type == ModelType.LSTM:
         print("LSTM modeli için veri hazırlanıyor...")
-        time_steps = 10
-        num_features = X_train.shape[1] // time_steps
+        
+        time_steps = model_params["time_steps"]
+        total_features = X_train.shape[1]
 
+        # time_steps ile uyumlu num_features hesaplanıyor
+        if total_features % time_steps != 0:
+            raise ValueError(f"Özellik sayısı ({total_features}) time_steps ({time_steps}) ile uyumlu değil. time_steps değerini değiştirin.")
+        
+        num_features = total_features // time_steps
+
+        # X_train ve X_test yeniden şekillendiriliyor
         X_train_lstm = X_train.reshape(-1, time_steps, num_features)
         X_test_lstm = X_test.reshape(-1, time_steps, num_features)
 
         print("LSTM modeli eğitiliyor...")
         lstm_trainer = LSTMTrainer(input_shape=(time_steps, num_features), lstm_units=64)
-        lstm_trainer.train(X_train_lstm, y_train, X_val=X_test_lstm, y_val=y_test, epochs=10, batch_size=32)
+        lstm_trainer.train(
+            X_train_lstm, y_train, X_val=X_test_lstm, y_val=y_test,
+            epochs=model_params.get("epochs", 10),
+            batch_size=model_params.get("batch_size", 32)
+        )
 
         print("LSTM modeli değerlendiriliyor...")
         y_pred_lstm = lstm_trainer.predict(X_test_lstm)
         accuracy_lstm = accuracy_score(y_test, y_pred_lstm)
         print(f"LSTM Test Doğruluğu: {accuracy_lstm * 100:.2f}%")
 
-        save_results_to_excel(output_dir, "LSTM", {"lstm_units": 64, "epochs": 10, "batch_size": 32}, lstm_trainer.history.history['accuracy'][-1])
-
+        save_results_to_excel(
+            output_dir,
+            "LSTM",
+            model_params,
+            lstm_trainer.history.history['loss'][-1],
+            lstm_trainer.history.history['accuracy'][-1],
+            lstm_trainer.history.history['val_loss'][-1],
+            lstm_trainer.history.history['val_accuracy'][-1]
+        )
         lstm_trainer.plot_metrics()
         
+    elif model_type == ModelType.RANDOM_FOREST:
+        print("Random Forest modeli eğitiliyor...")
+        rf_trainer = RandomForestTrainer(
+            n_estimators=model_params.get("n_estimators", 100),
+            max_depth=model_params.get("max_depth", None),
+            random_state=model_params.get("random_state", 42)
+        )
+        rf_trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
+
+        print("Random Forest modeli değerlendiriliyor...")
+        y_pred_rf = rf_trainer.predict(X_test)
+        accuracy_rf = accuracy_score(y_test, y_pred_rf)
+        print(f"Random Forest Test Doğruluğu: {accuracy_rf * 100:.2f}%")
+
+        # Sonuçları kaydet
+        save_results_to_excel(
+            output_dir,
+            "RandomForest",
+            model_params,
+            rf_trainer.train_loss,
+            rf_trainer.train_accuracy,
+            rf_trainer.val_loss,
+            rf_trainer.val_accuracy
+        )
+        
+    elif model_type == ModelType.SVM:
+        print("SVM modeli eğitiliyor...")
+        svm_trainer = SVMTrainer(
+            kernel=model_params.get("kernel", "linear"),
+            C=model_params.get("C", 1.0),
+            random_state=model_params.get("random_state", 42)
+        )
+        svm_trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
+
+        print("SVM modeli değerlendiriliyor...")
+        y_pred_svm = svm_trainer.predict(X_test)
+        accuracy_svm = accuracy_score(y_test, y_pred_svm)
+        print(f"SVM Test Doğruluğu: {accuracy_svm * 100:.2f}%")
+
+        # Sonuçları kaydet
+        save_results_to_excel(
+            output_dir,
+            "SVM",
+            model_params,
+            train_loss=None,  # SVM için `train_loss` hesaplanmaz
+            train_accuracy=svm_trainer.train_accuracy,
+            val_loss=None,  # SVM için `val_loss` hesaplanmaz
+            val_accuracy=svm_trainer.val_accuracy
+        )
+        
+    elif model_type == ModelType.ANN:
+        print("Yapay Sinir Ağları (ANN) modeli eğitiliyor...")
+        ann_trainer = ANNTrainer(
+            input_dim=X_train.shape[1],
+            hidden_layers=model_params.get("hidden_layers", [64, 32]),
+            dropout_rate=model_params.get("dropout_rate", 0.2),
+            learning_rate=model_params.get("learning_rate", 0.001)
+        )
+        ann_trainer.train(
+            X_train, y_train,
+            X_val=X_test, y_val=y_test,
+            epochs=model_params.get("epochs", 10),
+            batch_size=model_params.get("batch_size", 32)
+        )
+
+        print("ANN modeli değerlendiriliyor...")
+        y_pred_ann = ann_trainer.predict(X_test)
+        accuracy_ann = accuracy_score(y_test, y_pred_ann)
+        print(f"ANN Test Doğruluğu: {accuracy_ann * 100:.2f}%")
+
+        # Sonuçları kaydet
+        save_results_to_excel(
+            output_dir,
+            "ANN",
+            model_params,
+            train_loss=ann_trainer.history.history['loss'][-1],
+            train_accuracy=ann_trainer.history.history['accuracy'][-1],
+            val_loss=ann_trainer.history.history['val_loss'][-1] if 'val_loss' in ann_trainer.history.history else None,
+            val_accuracy=ann_trainer.history.history['val_accuracy'][-1] if 'val_accuracy' in ann_trainer.history.history else None
+        )
+
     else:
         print("Geçersiz model türü seçildi!")
 
-def main(file_path, selected_model):
+def main(file_path, selected_model, model_params):
     
     output_dir = "./output"
     if not os.path.exists(output_dir):
@@ -144,7 +246,7 @@ def main(file_path, selected_model):
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    run_model(selected_model, X_train, y_train, X_test, y_test, output_dir="./output")
+    run_model(selected_model, model_params, X_train, y_train, X_test, y_test, output_dir="./output")
 
     # Sonuçların kaydedilmesi
     print(f"Model eğitimi ve değerlendirme başarıyla tamamlandı. Sonuçlar '{output_dir}' klasörüne kaydedildi.")
@@ -154,10 +256,22 @@ if __name__ == "__main__":
     dataset_path = "dataset/EMG-data.csv" 
     
     selected_model = ModelType.LOGISTIC_REGRESSION
-    #selected_model = ModelType.LSTM
-    #selected_model = ModelType.DECISION_TREE
-    #selected_model = ModelType.ANN
-    #selected_model = ModelType.RANDOM_FOREST
-    #selected_model = ModelType.SVM
+    model_params = {"max_iter": 250}
     
-    main(dataset_path, selected_model=selected_model)
+    selected_model = ModelType.DECISION_TREE
+    model_params = {"max_depth": 30}
+      
+    selected_model = ModelType.RANDOM_FOREST
+    model_params = { "n_estimators": 150,  "max_depth": 20, "random_state": 42}
+    
+    selected_model = ModelType.ANN
+    model_params = {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64 } 
+    
+    selected_model = ModelType.LSTM
+    model_params = { "time_steps":10, "lstm_units": 64,"epochs": 10, "batch_size": 32 }
+    
+    """
+    selected_model = ModelType.SVM
+    model_params = {"kernel": "rbf", "C": 1.0,"random_state": 42}
+    """
+    main(dataset_path, selected_model=selected_model, model_params=model_params)
