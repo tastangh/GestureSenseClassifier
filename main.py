@@ -1,6 +1,9 @@
 import os
 import pandas as pd
 import numpy as np
+from enum import Enum
+
+# Dataset
 from dataset_filter import DatasetFilter
 from dataset_cleaner import DatasetCleaner
 from dataset_balancer import DatasetBalancer
@@ -10,8 +13,71 @@ from log_reg_trainer import LogRegTrainer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-def main(file_path):
-    # Çıktı klasörünü oluştur
+# Models
+from decisiontree_trainer import DecisionTreeTrainer
+from lstm_trainer import LSTMTrainer
+from log_reg_trainer import LogRegTrainer
+
+class ModelType(Enum):
+    
+    LOGISTIC_REGRESSION = "LogisticRegression"
+    DECISION_TREE = "DecisionTree"
+    RANDOM_FOREST = "RandomForest"
+    LSTM = "LSTM"
+    SVM = "SVM"
+    # Artificial Neural Networks - Yapay Sinir Ağları
+    ANN = "ANN"
+    
+    
+def run_model(model_type, X_train, y_train, X_test, y_test, output_dir):
+    
+    if model_type == ModelType.LOGISTIC_REGRESSION:
+        print("Lojistik regresyon modeli eğitiliyor...")
+        trainer = LogRegTrainer(max_iter=100)
+        trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
+
+        print("Model değerlendiriliyor...")
+        y_pred = trainer.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        print(f"Test Doğruluğu: {accuracy * 100:.2f}%")
+
+    elif model_type == ModelType.DECISION_TREE:
+        print("Decision Tree modeli eğitiliyor...")
+        dt_trainer = DecisionTreeTrainer(max_depth=5)
+        dt_trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
+
+        print("Decision Tree modeli değerlendiriliyor...")
+        y_pred_dt = dt_trainer.predict(X_test)
+        accuracy_dt = accuracy_score(y_test, y_pred_dt)
+        print(f"Decision Tree Test Doğruluğu: {accuracy_dt * 100:.2f}%")
+
+    elif model_type == ModelType.LSTM:
+        print("LSTM modeli için veri hazırlanıyor...")
+        time_steps = 10
+        num_features = X_train.shape[1] // time_steps
+
+        X_train_lstm = X_train.reshape(-1, time_steps, num_features)
+        X_test_lstm = X_test.reshape(-1, time_steps, num_features)
+
+        print("LSTM modeli eğitiliyor...")
+        lstm_trainer = LSTMTrainer(input_shape=(time_steps, num_features), lstm_units=64)
+        lstm_trainer.train(X_train_lstm, y_train, X_val=X_test_lstm, y_val=y_test, epochs=10, batch_size=32)
+
+        print("LSTM modeli değerlendiriliyor...")
+        y_pred_lstm = lstm_trainer.predict(X_test_lstm)
+        accuracy_lstm = accuracy_score(y_test, y_pred_lstm)
+        print(f"LSTM Test Doğruluğu: {accuracy_lstm * 100:.2f}%")
+
+        lstm_trainer.plot_metrics()
+
+    elif model_type == ModelType.SVM:
+        print("SVM")
+        
+    else:
+        print("Geçersiz model türü seçildi!")
+
+def main(file_path, selected_model):
+    
     output_dir = "./output"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -70,20 +136,16 @@ def main(file_path):
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    # Model eğitimi
-    print("Lojistik regresyon modeli eğitiliyor...")
-    trainer = LogRegTrainer(max_iter=100)
-    trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
-
-    # Tahmin ve değerlendirme
-    print("Model değerlendiriliyor...")
-    y_pred = trainer.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    print(f"Test Doğruluğu: {accuracy * 100:.2f}%")
+    run_model(selected_model, X_train, y_train, X_test, y_test, output_dir="./output")
 
     # Sonuçların kaydedilmesi
     print(f"Model eğitimi ve değerlendirme başarıyla tamamlandı. Sonuçlar '{output_dir}' klasörüne kaydedildi.")
 
 if __name__ == "__main__":
     dataset_path = "dataset/EMG-data.csv"  # Dataset yolunu güncelleyin
-    main(dataset_path)
+    
+    selected_model = ModelType.LOGISTIC_REGRESSION
+    #selected_model = ModelType.LSTM
+    #selected_model = ModelType.DECISION_TREE
+    
+    main(dataset_path, selected_model=selected_model)
