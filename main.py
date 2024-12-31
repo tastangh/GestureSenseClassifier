@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 from enum import Enum
+import time
 
 # Dataset
 from dataset_filter import DatasetFilter
@@ -268,9 +269,13 @@ if __name__ == "__main__":
     model_params = {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64 } 
     
     selected_model = ModelType.LSTM
-    model_params = { "time_steps":9 , "lstm_units": 64,"epochs": 10, "batch_size": 90 }
+    model_params = { "time_steps":8 , "lstm_units": 64,"epochs": 10, "batch_size": 90 }
      
     selected_model = ModelType.SVM
-    model_params = {"kernel": "rbf", "C": 1.0,"random_state": 42}   
-
+    model_params = {"kernel": "linear", "C": 1.0,"random_state": 42}   
+    
+    baslangic = time.time()
     main(dataset_path, selected_model=selected_model, model_params=model_params)
+    bitis = time.time()
+    
+    print("SVM Model :", bitis-baslangic)
