@@ -24,6 +24,8 @@ from ann_trainer import ANNTrainer
 # Save function
 from save_results import save_results_to_excel
 
+import tensorflow as tf
+
 class ModelType(Enum):
     
     LOGISTIC_REGRESSION = "LogisticRegression"
@@ -39,15 +41,37 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
     
     if model_type == ModelType.LOGISTIC_REGRESSION:
         print("Lojistik regresyon modeli eğitiliyor...")
-        trainer = LogRegTrainer(model_params["max_iter"])
-        trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
+        num_classes = len(np.unique(y_train))
+        trainer = LogRegTrainer(input_dim=X_train.shape[1], num_classes=num_classes, output_dir=output_dir)
+        trainer.train(X_train, y_train, X_val=X_test, y_val=y_test,
+                      epochs=model_params.get("epochs", 10),
+                      batch_size=model_params.get("batch_size", 32),
+                      optimizer_type=model_params.get("optimizer_type", "adam"),
+                      learning_rate=model_params.get("learning_rate", 0.001),
+                      grid_search=model_params.get("grid_search", False),
+                      param_grid=model_params.get("param_grid", None),
+                      early_stopping=model_params.get("early_stopping", False),
+                      patience=model_params.get("patience", 3),
+                      learning_rate_scheduling=model_params.get("learning_rate_scheduling", False),
+                      factor=model_params.get("factor", 0.1),
+                      min_lr = model_params.get("min_lr",1e-6)
+                      )
 
         print("Model değerlendiriliyor...")
         y_pred = trainer.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
         print(f"Test Doğruluğu: {accuracy * 100:.2f}%")
         
-        save_results_to_excel(output_dir, "LogisticRegression", model_params,trainer.train_loss, trainer.train_accuracy, trainer.val_loss, trainer.val_accuracy)
+        save_results_to_excel(
+            output_dir,
+            "LogisticRegression",
+            model_params,
+            trainer.history['loss'][-1],  # Son epoch'un loss değeri
+            trainer.history['accuracy'][-1], # Son epoch'un accuracy değeri
+            trainer.history['val_loss'][-1] if 'val_loss' in trainer.history else None,
+            trainer.history['val_accuracy'][-1] if 'val_accuracy' in trainer.history else None
+        )
+        trainer.plot_metrics()
 
     elif model_type == ModelType.DECISION_TREE:
         print("Decision Tree modeli eğitiliyor...")
@@ -78,7 +102,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
         X_test_lstm = X_test.reshape(-1, time_steps, num_features)
 
         print("LSTM modeli eğitiliyor...")
-        lstm_trainer = LSTMTrainer(input_shape=(time_steps, num_features), lstm_units=64)
+        lstm_trainer = LSTMTrainer(input_shape=(time_steps, num_features), lstm_units=64, output_dir=output_dir)
         lstm_trainer.train(
             X_train_lstm, y_train, X_val=X_test_lstm, y_val=y_test,
             epochs=model_params.get("epochs", 10),
@@ -157,7 +181,8 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
             input_dim=X_train.shape[1],
             hidden_layers=model_params.get("hidden_layers", [64, 32]),
             dropout_rate=model_params.get("dropout_rate", 0.2),
-            learning_rate=model_params.get("learning_rate", 0.001)
+            learning_rate=model_params.get("learning_rate", 0.001),
+            output_dir=output_dir
         )
         ann_trainer.train(
             X_train, y_train,
@@ -192,6 +217,7 @@ def main(file_path, selected_models):
         os.makedirs(output_dir)
         print(f"'{output_dir}' klasörü oluşturuldu.")
 
+
     # Veri yükleme
     print("Veri yükleniyor...")
     data = pd.read_csv(file_path)
@@ -200,7 +226,7 @@ def main(file_path, selected_models):
     # Veri temizleme
     print("Veri temizleme işlemi yapılıyor...")
     cleaner = DatasetCleaner()
-    data = cleaner.drop_columns(data, columns=["label"])
+    data = cleaner.drop_columns(data, columns=["label", "time"])
 
     # Filtreleme işlemi
     print("Tüm kanallar için band geçiren filtre uygulanıyor...")
@@ -232,7 +258,11 @@ def main(file_path, selected_models):
     # Özellik çıkarma
     print("Özellikler çıkarılıyor...")
     features, labels = DatasetFeatureExtractor.extract_features(filtered_data, channels,window_size=200)
-
+    
+    if np.isnan(features).any():
+        print("Error: Features contain NaN values.")
+    if np.isinf(features).any():
+        print("Error: Features contain infinite values.")
     # Veri dengeleme
     print("Veri SMOTE ile dengeleniyor...")
     balancer = DatasetBalancer()
@@ -245,9 +275,10 @@ def main(file_path, selected_models):
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
     
+    
     # Tüm Modelleri Eğitim Döngüsü
     for model_type, model_params in selected_models:
-        run_model(model_type, model_params, X_train, y_train, X_test, y_test, output_dir="./output")
+        run_model(model_type, model_params, X_train, y_train, X_test, y_test, output_dir=output_dir)
     
     # Sonuçların kaydedilmesi
     print(f"Model eğitimi ve değerlendirme başarıyla tamamlandı. Sonuçlar '{output_dir}' klasörüne kaydedildi.")
@@ -258,12 +289,27 @@ if __name__ == "__main__":
     
     # Model parametreleri ve hangi modelin çalıştırılacağını belirleme
     selected_models = [
-        (ModelType.LOGISTIC_REGRESSION, {"max_iter": 250}), # Logistic Regression
-        (ModelType.DECISION_TREE, {"max_depth": 30}), # Decision Tree
-        (ModelType.RANDOM_FOREST, { "n_estimators": 150,  "max_depth": 20, "random_state": 42}), # Random Forest
-        (ModelType.ANN, {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64 }), # ANN
-        (ModelType.LSTM, { "time_steps":8 , "lstm_units": 64,"epochs": 10, "batch_size": 90 }), # LSTM
-        (ModelType.SVM, {"kernel": "linear", "C": 1.0,"random_state": 42}) # SVM 
+    (ModelType.LOGISTIC_REGRESSION, {
+            "learning_rate": 0.001,
+            "epochs": 100,
+            "batch_size": 32,
+            "optimizer_type": "adam",
+            "grid_search": True,
+            "param_grid": {
+                "learning_rate": [0.001, 0.01, 0.1],
+                "optimizer_type": ["adam", "sgd"]
+                },
+            "early_stopping": True,
+            "patience": 10,
+            "learning_rate_scheduling":True,
+            "factor": 0.1,
+            "min_lr":1e-6
+        })   
+        # (ModelType.DECISION_TREE, {"max_depth": 30}), # Decision Tree
+        # (ModelType.RANDOM_FOREST, { "n_estimators": 150,  "max_depth": 20, "random_state": 42}), # Random Forest
+        # (ModelType.ANN, {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64 }), # ANN
+        # (ModelType.LSTM, { "time_steps":8 , "lstm_units": 64,"epochs": 10, "batch_size": 90 }), # LSTM
+        # (ModelType.SVM, {"kernel": "linear", "C": 1.0,"random_state": 42}) # SVM 
     ]
     
     baslangic = time.time()
