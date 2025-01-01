@@ -100,13 +100,16 @@ class LogRegTrainer:
             print(f"Epoch {epoch + 1}/{epochs}")
             epoch_loss = []
             epoch_acc = []
+            metric = tf.metrics.Accuracy() # Define metric
             for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
                 loss, y_pred = self.train_step(x_batch_train, y_batch_train)
-                acc = accuracy_score(tf.argmax(y_batch_train, axis=1), tf.argmax(y_pred, axis=1))
+                metric.update_state(tf.argmax(y_batch_train, axis=1), tf.argmax(y_pred, axis=1))
+                acc = metric.result().numpy()
                 epoch_loss.append(loss)
                 epoch_acc.append(acc)
                 print(f"  Batch {step + 1}/{len(train_dataset)}, Loss: {loss:.4f}, Accuracy: {acc:.4f}", end='\r')
             print() # Her batch'den sonra satır atla
+            metric.reset_state() # reset the metric after each epoch
 
             avg_loss = np.mean(epoch_loss)
             avg_acc = np.mean(epoch_acc)
@@ -158,13 +161,16 @@ class LogRegTrainer:
                print(f"  Epoch {epoch + 1}/{epochs}")
                epoch_loss = []
                epoch_acc = []
+               metric = tf.metrics.Accuracy() # Define metric
                for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
                    loss, y_pred = self.train_step(x_batch_train, y_batch_train)
-                   acc = accuracy_score(tf.argmax(y_batch_train, axis=1), tf.argmax(y_pred, axis=1))
+                   metric.update_state(tf.argmax(y_batch_train, axis=1), tf.argmax(y_pred, axis=1))
+                   acc = metric.result().numpy()
                    epoch_loss.append(loss)
                    epoch_acc.append(acc)
                    print(f"    Batch {step + 1}/{len(train_dataset)}, Loss: {loss:.4f}, Accuracy: {acc:.4f}", end='\r')
                print()
+               metric.reset_state() # reset the metric after each epoch
                
                avg_loss = np.mean(epoch_loss)
                avg_acc = np.mean(epoch_acc)
@@ -204,14 +210,15 @@ class LogRegTrainer:
 
     def validate(self, val_dataset):
         val_loss_list = []
-        val_acc_list = []
+        val_acc_list = [] # This line was missing.
+        metric = tf.metrics.Accuracy()
         for x_batch_val, y_batch_val in val_dataset:
           y_pred = self.model(x_batch_val, training=False)
           val_loss = self.loss_fn(y_batch_val, y_pred)
-          val_acc = accuracy_score(tf.argmax(y_batch_val, axis=1), tf.argmax(y_pred, axis=1))
+          metric.update_state(tf.argmax(y_batch_val, axis=1), tf.argmax(y_pred, axis=1))
           val_loss_list.append(val_loss)
-          val_acc_list.append(val_acc)
-
+          val_acc_list.append(metric.result().numpy())
+        metric.reset_state()
         return np.mean(val_loss_list), np.mean(val_acc_list)
 
     def predict(self, X_test):

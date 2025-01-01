@@ -26,6 +26,22 @@ from ann_trainer import ANNTrainer
 from save_results import save_results_to_excel
 
 import tensorflow as tf
+# TensorFlow GPU memory limit configuration
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        # Restrict TensorFlow to only use 10GB of GPU RAM
+        tf.config.experimental.set_virtual_device_configuration(
+            gpus[0],
+            [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=9000)]
+        )
+        logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+        print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+    except RuntimeError as e:
+        # Virtual devices must be set before GPUs have been initialized
+        print(e)
+
+
 
 class ModelType(Enum):
     
@@ -237,24 +253,24 @@ def main(file_path, selected_models):
 
     # Grafikler
     print("\nTüm kanallar için frekans spektrumları çiziliyor...")
-    frequency_plot_path = os.path.join(output_dir, "frequency_spectra.png")
-    filter_processor.plot_frequency_spectrum(
-        signals=[data[channel] for channel in channels],
-        filtered_signals=[filtered_data[channel] for channel in channels],
-        titles=[f"{channel} - Frekans Spektrumu" for channel in channels],
-        output_path=frequency_plot_path
-    )
+    # frequency_plot_path = os.path.join(output_dir, "frequency_spectra.png")
+    # filter_processor.plot_frequency_spectrum(
+    #     signals=[data[channel] for channel in channels],
+    #     filtered_signals=[filtered_data[channel] for channel in channels],
+    #     titles=[f"{channel} - Frekans Spektrumu" for channel in channels],
+    #     output_path=frequency_plot_path
+    # )
 
-    print("\nTüm kanallar için zaman domeni sinyalleri çiziliyor...")
-    time_plot_path = os.path.join(output_dir, "time_domain_signals.png")
-    filter_processor.plot_signals(
-        signals=[data[channel] for channel in channels],
-        filtered_signals=[filtered_data[channel] for channel in channels],
-        titles=[f"{channel} - Zaman Domeni Sinyalleri" for channel in channels],
-        output_path=time_plot_path,
-        start=0,
-        end=1000
-    )
+    # print("\nTüm kanallar için zaman domeni sinyalleri çiziliyor...")
+    # time_plot_path = os.path.join(output_dir, "time_domain_signals.png")
+    # filter_processor.plot_signals(
+    #     signals=[data[channel] for channel in channels],
+    #     filtered_signals=[filtered_data[channel] for channel in channels],
+    #     titles=[f"{channel} - Zaman Domeni Sinyalleri" for channel in channels],
+    #     output_path=time_plot_path,
+    #     start=0,
+    #     end=1000
+    # )
 
     # Özellik çıkarma
     print("Özellikler çıkarılıyor...")
