@@ -1,3 +1,4 @@
+# main.py
 import os
 import pandas as pd
 import numpy as np
@@ -226,7 +227,7 @@ def main(file_path, selected_models):
     # Veri temizleme
     print("Veri temizleme işlemi yapılıyor...")
     cleaner = DatasetCleaner()
-    data = cleaner.drop_columns(data, columns=["label", "time"])
+    data = cleaner.drop_columns(data, columns=["label"])
 
     # Filtreleme işlemi
     print("Tüm kanallar için band geçiren filtre uygulanıyor...")
