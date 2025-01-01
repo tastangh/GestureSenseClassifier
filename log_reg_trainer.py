@@ -1,7 +1,7 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss, accuracy_score
+from sklearn.model_selection import RandomizedSearchCV
 
 class LogRegTrainer:
     
@@ -9,20 +9,43 @@ class LogRegTrainer:
     Lojistik Regresyon model eğitimi ve metrik grafiği çizimi için sınıf.
     """
     
-    def __init__(self, max_iter=1000, random_state=42, class_weight="balanced"):
+    def __init__(self, random_state=42):
         """
         LogRegTrainer sınıfını başlatır.
         :param max_iter: Maksimum iterasyon sayısı
         :param random_state: Rastgelelik kontrolü için sabit bir değer
         :param class_weight: Sınıf ağırlıkları ('balanced' veya None)
         """
-        self.model = LogisticRegression(max_iter=max_iter, random_state=random_state, class_weight=class_weight)
+        self.model = None
+        self.random_state= random_state
         self.train_loss = None
         self.val_loss = None
         self.train_accuracy = None
         self.val_accuracy = None
+    def optimize_hyperparameters(self, X_train, y_train, X_val=None, y_val=None, n_trials=10):
+         # Random search için hiperparametre aralığı
+        param_dist = {
+            "C": np.logspace(-4, 4, 20),  # C için logaritmik aralık
+            "max_iter": np.arange(100, 2000, 100)  # max_iter için aralık
+        }
+        
+        # RandomizedSearchCV ile optimizasyon
+        lr_random = RandomizedSearchCV(
+            LogisticRegression(random_state=self.random_state, class_weight="balanced"),
+            param_distributions=param_dist,
+            n_iter=n_trials,  # Deneme sayısı
+            cv=3,  # Cross validation sayısı
+            random_state=self.random_state,
+            scoring="accuracy",
+            
+        )
+        
+        lr_random.fit(X_train, y_train)
+        
+        print("LogisticRegression - En iyi Parametreler:", lr_random.best_params_)
+        self.model = lr_random.best_estimator_
 
-    def train(self, X_train, y_train, X_val=None, y_val=None):
+    def train(self, X_train, y_train, X_val=None, y_val=None, optimize=True, n_trials=10):
         """
         Modeli eğitir ve eğitim/doğrulama metriklerini hesaplar.
         :param X_train: Eğitim verisi
@@ -30,10 +53,13 @@ class LogRegTrainer:
         :param X_val: Doğrulama verisi (isteğe bağlı)
         :param y_val: Doğrulama etiketi (isteğe bağlı)
         """
-        unique_classes = np.unique(y_train)
+        if optimize:
+            self.optimize_hyperparameters(X_train, y_train, X_val, y_val, n_trials)
+        else:
+             self.model = LogisticRegression(max_iter=1000, random_state=self.random_state, class_weight="balanced")
+             self.model.fit(X_train, y_train)
 
-        # Modeli eğit
-        self.model.fit(X_train, y_train)
+        unique_classes = np.unique(y_train)
 
         # Eğitim metriklerini hesapla
         y_train_pred_prob = self.model.predict_proba(X_train)
@@ -59,4 +85,3 @@ class LogRegTrainer:
         :return: Tahmin edilen etiketler
         """
         return self.model.predict(X_test)
-

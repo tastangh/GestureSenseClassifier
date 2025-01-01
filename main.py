@@ -37,12 +37,12 @@ class ModelType(Enum):
     ANN = "ANN"
     
     
-def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output_dir):
+def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output_dir, optimize=True):
     
     if model_type == ModelType.LOGISTIC_REGRESSION:
         print("Lojistik regresyon modeli eğitiliyor...")
-        trainer = LogRegTrainer(model_params["max_iter"])
-        trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
+        trainer = LogRegTrainer(random_state=model_params.get("random_state",42))
+        trainer.train(X_train, y_train, X_val=X_test, y_val=y_test, optimize=optimize, n_trials=model_params.get("n_trials", 10))
 
         print("Model değerlendiriliyor...")
         y_pred = trainer.predict(X_test)
@@ -53,8 +53,8 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
 
     elif model_type == ModelType.DECISION_TREE:
         print("Decision Tree modeli eğitiliyor...")
-        dt_trainer = DecisionTreeTrainer(model_params["max_depth"])
-        dt_trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
+        dt_trainer = DecisionTreeTrainer(random_state=model_params.get("random_state",42),class_weight=model_params.get("class_weight","balanced"))
+        dt_trainer.train(X_train, y_train, X_val=X_test, y_val=y_test, optimize=optimize, n_trials=model_params.get("n_trials", 10))
 
         print("Decision Tree modeli değerlendiriliyor...")
         y_pred_dt = dt_trainer.predict(X_test)
@@ -80,11 +80,13 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
         X_test_lstm = X_test.reshape(-1, time_steps, num_features)
 
         print("LSTM modeli eğitiliyor...")
-        lstm_trainer = LSTMTrainer(input_shape=(time_steps, num_features), lstm_units=64)
+        lstm_trainer = LSTMTrainer(input_shape=(time_steps, num_features),random_state=model_params.get("random_state",42))
         lstm_trainer.train(
             X_train_lstm, y_train, X_val=X_test_lstm, y_val=y_test,
             epochs=model_params.get("epochs", 10),
-            batch_size=model_params.get("batch_size", 32)
+            batch_size=model_params.get("batch_size", 32),
+            optimize=optimize,
+            n_trials=model_params.get("n_trials", 10)
         )
 
         print("LSTM modeli değerlendiriliyor...")
@@ -105,12 +107,8 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
         
     elif model_type == ModelType.RANDOM_FOREST:
         print("Random Forest modeli eğitiliyor...")
-        rf_trainer = RandomForestTrainer(
-            n_estimators=model_params.get("n_estimators", 100),
-            max_depth=model_params.get("max_depth", None),
-            random_state=model_params.get("random_state", 42)
-        )
-        rf_trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
+        rf_trainer = RandomForestTrainer(random_state=model_params.get("random_state",42), class_weight=model_params.get("class_weight","balanced"))
+        rf_trainer.train(X_train, y_train, X_val=X_test, y_val=y_test, optimize=optimize, n_trials=model_params.get("n_trials", 10))
 
         print("Random Forest modeli değerlendiriliyor...")
         y_pred_rf = rf_trainer.predict(X_test)
@@ -130,12 +128,8 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
         
     elif model_type == ModelType.SVM:
         print("SVM modeli eğitiliyor...")
-        svm_trainer = SVMTrainer(
-            kernel=model_params.get("kernel", "linear"),
-            C=model_params.get("C", 1.0),
-            random_state=model_params.get("random_state", 42)
-        )
-        svm_trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
+        svm_trainer = SVMTrainer(random_state=model_params.get("random_state",42))
+        svm_trainer.train(X_train, y_train, X_val=X_test, y_val=y_test, optimize=optimize, n_trials=model_params.get("n_trials", 10))
 
         print("SVM modeli değerlendiriliyor...")
         y_pred_svm = svm_trainer.predict(X_test)
@@ -157,15 +151,15 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
         print("Yapay Sinir Ağları (ANN) modeli eğitiliyor...")
         ann_trainer = ANNTrainer(
             input_dim=X_train.shape[1],
-            hidden_layers=model_params.get("hidden_layers", [64, 32]),
-            dropout_rate=model_params.get("dropout_rate", 0.2),
-            learning_rate=model_params.get("learning_rate", 0.001)
+            random_state=model_params.get("random_state",42)
         )
         ann_trainer.train(
             X_train, y_train,
             X_val=X_test, y_val=y_test,
             epochs=model_params.get("epochs", 10),
-            batch_size=model_params.get("batch_size", 32)
+            batch_size=model_params.get("batch_size", 32),
+            optimize=optimize,
+            n_trials=model_params.get("n_trials", 10)
         )
 
         print("ANN modeli değerlendiriliyor...")
@@ -247,7 +241,7 @@ def main(file_path, selected_model, model_params):
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    run_model(selected_model, model_params, X_train, y_train, X_test, y_test, output_dir="./output")
+    run_model(selected_model, model_params, X_train, y_train, X_test, y_test, output_dir="./output", optimize=model_params.get("optimize", True))
 
     # Sonuçların kaydedilmesi
     print(f"Model eğitimi ve değerlendirme başarıyla tamamlandı. Sonuçlar '{output_dir}' klasörüne kaydedildi.")
@@ -257,22 +251,22 @@ if __name__ == "__main__":
     dataset_path = "dataset/EMG-data.csv" 
     
     selected_model = ModelType.LOGISTIC_REGRESSION
-    model_params = {"max_iter": 250}
+    model_params = {"random_state": 42, "optimize": True, "n_trials": 5 }
     
     # selected_model = ModelType.DECISION_TREE
-    # model_params = {"max_depth": 30}
+    # model_params = {"random_state": 42, "optimize": True, "n_trials": 5, "class_weight": "balanced" }
       
     # selected_model = ModelType.RANDOM_FOREST
-    # model_params = { "n_estimators": 150,  "max_depth": 20, "random_state": 42}
+    # model_params = { "random_state": 42, "optimize": True, "n_trials": 5,  "class_weight": "balanced"}
     
     # selected_model = ModelType.ANN
-    # model_params = {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64 } 
+    # model_params = {"random_state": 42, "optimize": True, "n_trials": 5, "epochs": 20, "batch_size": 64 } 
     
     # selected_model = ModelType.LSTM
-    # model_params = { "time_steps":8 , "lstm_units": 64,"epochs": 10, "batch_size": 90 }
+    # model_params = { "time_steps":8 , "random_state": 42, "optimize": True, "n_trials": 5, "epochs": 10, "batch_size": 90 }
      
     # selected_model = ModelType.SVM
-    # model_params = {"kernel": "linear", "C": 1.0,"random_state": 42}   
+    # model_params = {"random_state": 42, "optimize": True, "n_trials": 5}   
     
     baslangic = time.time()
     main(dataset_path, selected_model=selected_model, model_params=model_params)
