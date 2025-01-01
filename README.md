@@ -13,3 +13,5 @@ Windows'ta
 3. Proje Bağımlılıklarını Yükleme
 Sanal ortam etkinleştirildikten sonra, aşağıdaki komutla gerekli bağımlılıkları yükleyin:
 pip install -r requirements.txt
+
+export HSA_OVERRIDE_GFX_VERSION=10.3.0
