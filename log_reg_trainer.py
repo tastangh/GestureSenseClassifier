@@ -46,7 +46,6 @@ class LogRegTrainer:
 
     def train(self, X_train, y_train, X_val=None, y_val=None, epochs=10, batch_size=32,
               optimizer_type='adam', learning_rate=0.001,
-              grid_search=False, param_grid=None,
               early_stopping=False, patience=3,
               learning_rate_scheduling=False, factor=0.1, min_lr=1e-6):
         """
@@ -59,8 +58,6 @@ class LogRegTrainer:
         :param batch_size: Eğitim için batch boyutu
         :param optimizer_type: Kullanılacak optimizasyon algoritması ('adam', 'sgd')
         :param learning_rate: Öğrenme oranı
-        :param grid_search: Grid search yapılıp yapılmayacağı (bool)
-        :param param_grid: Grid search için parametre gridi
         :param early_stopping: Early stopping yapılıp yapılmayacağı (bool)
         :param patience: Early stopping sabrı (int)
         :param learning_rate_scheduling: Learning rate scheduling yapılıp yapılmayacağı (bool)
@@ -73,11 +70,6 @@ class LogRegTrainer:
             y_val_encoded = self.label_binarizer.transform(y_val)
         else:
             y_val_encoded = None
-        
-        if grid_search:
-             self._grid_search_train(X_train, y_train_encoded, X_val, y_val_encoded, epochs, batch_size, param_grid,
-                                    early_stopping, patience, learning_rate_scheduling, factor, min_lr)
-             return
         
         self.optimizer = self._create_optimizer(optimizer_type, learning_rate)
         
@@ -126,78 +118,6 @@ class LogRegTrainer:
         self.history = history
         print("\nEğitim Tamamlandı!")
     
-    
-    def _grid_search_train(self, X_train, y_train, X_val, y_val, epochs, batch_size, param_grid,
-                           early_stopping, patience, learning_rate_scheduling, factor, min_lr):
-        
-        grid = ParameterGrid(param_grid)
-        best_val_accuracy = 0
-        best_params = None
-        best_history = None
-        
-        for params in grid:
-            print(f"\nTrying parameters: {params}")
-            optimizer_type = params.get('optimizer_type', 'adam')
-            learning_rate = params.get('learning_rate', 0.001)
-            
-            self.optimizer = self._create_optimizer(optimizer_type, learning_rate)
-
-            train_dataset = tf.data.Dataset.from_tensor_slices((X_train, y_train)).batch(batch_size)
-            if X_val is not None and y_val is not None:
-                val_dataset = tf.data.Dataset.from_tensor_slices((X_val, y_val)).batch(batch_size)
-            else:
-                val_dataset = None
-            
-            history = {'loss': [], 'accuracy': [], 'val_loss': [], 'val_accuracy': []}
-            
-             # Callbacks
-            callbacks = []
-            if early_stopping:
-                callbacks.append(EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True))
-            if learning_rate_scheduling:
-                callbacks.append(ReduceLROnPlateau(monitor='val_loss', factor=factor, patience=patience//2, min_lr=min_lr))
-            
-            for epoch in range(epochs):
-               print(f"  Epoch {epoch + 1}/{epochs}")
-               epoch_loss = []
-               epoch_acc = []
-               metric = tf.metrics.Accuracy() # Define metric
-               for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
-                   loss, y_pred = self.train_step(x_batch_train, y_batch_train)
-                   metric.update_state(tf.argmax(y_batch_train, axis=1), tf.argmax(y_pred, axis=1))
-                   acc = metric.result().numpy()
-                   epoch_loss.append(loss)
-                   epoch_acc.append(acc)
-                   print(f"    Batch {step + 1}/{len(train_dataset)}, Loss: {loss:.4f}, Accuracy: {acc:.4f}", end='\r')
-               print()
-               metric.reset_state() # reset the metric after each epoch
-               
-               avg_loss = np.mean(epoch_loss)
-               avg_acc = np.mean(epoch_acc)
-               history['loss'].append(avg_loss)
-               history['accuracy'].append(avg_acc)
-               print(f"   Eğitim Loss: {avg_loss:.4f}, Eğitim Accuracy: {avg_acc:.4f}")
-
-               if val_dataset is not None:
-                 val_loss, val_acc = self.validate(val_dataset)
-                 history['val_loss'].append(val_loss)
-                 history['val_accuracy'].append(val_acc)
-                 print(f"   Doğrulama Loss: {val_loss:.4f}, Doğrulama Accuracy: {val_acc:.4f}")
-                
-            
-            # Keep best model
-            if val_dataset is not None and history['val_accuracy'][-1] > best_val_accuracy:
-               best_val_accuracy = history['val_accuracy'][-1]
-               best_params = params
-               best_history = history
-               self.best_model = self.model
-               
-        if best_params is not None:
-            print(f"\nBest parameters found: {best_params}")
-            print(f"Best validation accuracy: {best_val_accuracy:.4f}")
-            self.history = best_history
-        else:
-            print("No best parameters found during grid search")
                 
     @tf.function
     def train_step(self, x, y):

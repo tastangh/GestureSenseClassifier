@@ -65,8 +65,6 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
                       batch_size=model_params.get("batch_size", 32),
                       optimizer_type=model_params.get("optimizer_type", "adam"),
                       learning_rate=model_params.get("learning_rate", 0.001),
-                      grid_search=model_params.get("grid_search", False),
-                      param_grid=model_params.get("param_grid", None),
                       early_stopping=model_params.get("early_stopping", False),
                       patience=model_params.get("patience", 3),
                       learning_rate_scheduling=model_params.get("learning_rate_scheduling", False),
@@ -308,14 +306,9 @@ if __name__ == "__main__":
     selected_models = [
     (ModelType.LOGISTIC_REGRESSION, {
             "learning_rate": 0.001,
-            "epochs": 100,
+            "epochs": 20,
             "batch_size": 32,
             "optimizer_type": "adam",
-            "grid_search": True,
-            "param_grid": {
-                "learning_rate": [0.001, 0.01, 0.1],
-                "optimizer_type": ["adam", "sgd"]
-                },
             "early_stopping": True,
             "patience": 10,
             "learning_rate_scheduling":True,
