@@ -306,7 +306,7 @@ if __name__ == "__main__":
     selected_models = [
     (ModelType.LOGISTIC_REGRESSION, {
             "learning_rate": 0.001,
-            "epochs": 20,
+            "epochs": 10,
             "batch_size": 32,
             "optimizer_type": "adam",
             "early_stopping": True,
