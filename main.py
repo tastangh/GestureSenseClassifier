@@ -207,7 +207,7 @@ def main(file_path, selected_model, model_params):
     # Filtreleme işlemi
     print("Tüm kanallar için band geçiren filtre uygulanıyor...")
     filter_processor = DatasetFilter(data, channels, sampling_rate=1000)
-    filter_processor.filter_all_channels(filter_type="band", cutoff=(0.1, 499), order=4)
+    filter_processor.filter_all_channels(filter_type="band", cutoff=(1, 499), order=4)
     filtered_data = filter_processor.get_filtered_data()
 
     # Grafikler
@@ -233,7 +233,7 @@ def main(file_path, selected_model, model_params):
 
     # Özellik çıkarma
     print("Özellikler çıkarılıyor...")
-    features, labels = DatasetFeatureExtractor.extract_features(filtered_data, channels)
+    features, labels = DatasetFeatureExtractor.extract_features(filtered_data, channels,window_size=200)
 
     # Veri dengeleme
     print("Veri SMOTE ile dengeleniyor...")
@@ -262,20 +262,20 @@ if __name__ == "__main__":
     selected_model = ModelType.DECISION_TREE
     model_params = {"max_depth": 30}
       
-    selected_model = ModelType.RANDOM_FOREST
-    model_params = { "n_estimators": 150,  "max_depth": 20, "random_state": 42}
+    # selected_model = ModelType.RANDOM_FOREST
+    # model_params = { "n_estimators": 150,  "max_depth": 20, "random_state": 42}
     
-    selected_model = ModelType.ANN
-    model_params = {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64 } 
+    # selected_model = ModelType.ANN
+    # model_params = {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64 } 
     
-    selected_model = ModelType.LSTM
-    model_params = { "time_steps":8 , "lstm_units": 64,"epochs": 10, "batch_size": 90 }
+    # selected_model = ModelType.LSTM
+    # model_params = { "time_steps":8 , "lstm_units": 64,"epochs": 10, "batch_size": 90 }
      
-    selected_model = ModelType.SVM
-    model_params = {"kernel": "linear", "C": 1.0,"random_state": 42}   
+    # selected_model = ModelType.SVM
+    # model_params = {"kernel": "linear", "C": 1.0,"random_state": 42}   
     
     baslangic = time.time()
     main(dataset_path, selected_model=selected_model, model_params=model_params)
     bitis = time.time()
     
-    print("SVM Model :", bitis-baslangic)
+    # print("SVM Model :", bitis-baslangic)
