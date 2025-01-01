@@ -1,22 +1,25 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import log_loss, accuracy_score
+import numpy as np 
 
-class LogRegTrainer:
-    
+class RandomForestTrainer:
     """
-    Lojistik Regresyon model eğitimi ve metrik grafiği çizimi için sınıf.
+    Random Forest modelini eğitmek ve metrikleri hesaplamak için sınıf.
     """
-    
-    def __init__(self, max_iter=1000, random_state=42, class_weight="balanced"):
+    def __init__(self, n_estimators=100, max_depth=None, random_state=42, class_weight=None):
         """
-        LogRegTrainer sınıfını başlatır.
-        :param max_iter: Maksimum iterasyon sayısı
-        :param random_state: Rastgelelik kontrolü için sabit bir değer
+        RandomForestTrainer sınıfını başlatır.
+        :param n_estimators: Ağaç sayısı
+        :param max_depth: Maksimum derinlik
+        :param random_state: Rastgelelik kontrolü
         :param class_weight: Sınıf ağırlıkları ('balanced' veya None)
         """
-        self.model = LogisticRegression(max_iter=max_iter, random_state=random_state, class_weight=class_weight)
+        self.model = RandomForestClassifier(
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            random_state=random_state,
+            class_weight=class_weight
+        )
         self.train_loss = None
         self.val_loss = None
         self.train_accuracy = None
@@ -24,7 +27,7 @@ class LogRegTrainer:
 
     def train(self, X_train, y_train, X_val=None, y_val=None):
         """
-        Modeli eğitir ve eğitim/doğrulama metriklerini hesaplar.
+        Modeli eğitir ve metrikleri hesaplar.
         :param X_train: Eğitim verisi
         :param y_train: Eğitim etiketi
         :param X_val: Doğrulama verisi (isteğe bağlı)
@@ -59,4 +62,3 @@ class LogRegTrainer:
         :return: Tahmin edilen etiketler
         """
         return self.model.predict(X_test)
-

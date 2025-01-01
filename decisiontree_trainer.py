@@ -1,49 +1,26 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import log_loss, accuracy_score
-from sklearn.model_selection import RandomizedSearchCV
 
 class DecisionTreeTrainer:
     """
     Decision Tree modelini eğitmek ve metrik grafikleri çizmek için bir sınıf.
     """
-    def __init__(self,  random_state=42, class_weight="balanced"):
+    def __init__(self, max_depth=None, random_state=42, class_weight=None):
         """
         DecisionTreeTrainer sınıfını başlatır.
         :param max_depth: Maksimum derinlik
         :param random_state: Rastgelelik kontrolü için sabit bir değer
         :param class_weight: Sınıf ağırlıkları ('balanced' veya None)
         """
-        self.model = None
-        self.random_state= random_state
-        self.class_weight= class_weight
+        self.model = DecisionTreeClassifier(max_depth=max_depth, random_state=random_state, class_weight=class_weight)
         self.train_loss = None
         self.val_loss = None
         self.train_accuracy = None
         self.val_accuracy = None
-    def optimize_hyperparameters(self, X_train, y_train, X_val=None, y_val=None, n_trials=10):
-         # Random search için hiperparametre aralığı
-        param_dist = {
-            "max_depth": np.arange(5, 30, 2),
-        }
-        
-        # RandomizedSearchCV ile optimizasyon
-        dt_random = RandomizedSearchCV(
-            DecisionTreeClassifier(random_state=self.random_state, class_weight=self.class_weight),
-            param_distributions=param_dist,
-            n_iter=n_trials,  # Deneme sayısı
-            cv=3,  # Cross validation sayısı
-            random_state=self.random_state,
-            scoring="accuracy",
-            
-        )
-        
-        dt_random.fit(X_train, y_train)
-        
-        print("DecisionTree - En iyi Parametreler:", dt_random.best_params_)
-        self.model = dt_random.best_estimator_
 
-    def train(self, X_train, y_train, X_val=None, y_val=None, optimize=True, n_trials=10):
+    def train(self, X_train, y_train, X_val=None, y_val=None):
         """
         Modeli eğitir ve eğitim/doğrulama metriklerini hesaplar.
         :param X_train: Eğitim verisi
@@ -51,13 +28,10 @@ class DecisionTreeTrainer:
         :param X_val: Doğrulama verisi (isteğe bağlı)
         :param y_val: Doğrulama etiketi (isteğe bağlı)
         """
-        if optimize:
-            self.optimize_hyperparameters(X_train, y_train, X_val, y_val, n_trials)
-        else:
-             self.model = DecisionTreeClassifier(max_depth=None, random_state=self.random_state, class_weight=self.class_weight)
-             self.model.fit(X_train, y_train)
-
         unique_classes = np.unique(y_train)
+
+        # Modeli eğit
+        self.model.fit(X_train, y_train)
 
         # Eğitim metriklerini hesapla
         y_train_pred_prob = self.model.predict_proba(X_train)
@@ -106,3 +80,8 @@ class DecisionTreeTrainer:
             yval = bar.get_height()
             plt.text(bar.get_x() + bar.get_width()/2, yval, f'{yval:.4f}', ha='center', va='bottom')
         plt.show()
+
+# Örnek Kullanım
+# trainer = DecisionTreeTrainer(max_depth=5)
+# trainer.train(X_train, y_train, X_val=X_val, y_val=y_val)
+# trainer.plot_metrics()
