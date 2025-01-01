@@ -259,8 +259,8 @@ if __name__ == "__main__":
     selected_model = ModelType.LOGISTIC_REGRESSION
     model_params = {"max_iter": 250}
     
-    selected_model = ModelType.DECISION_TREE
-    model_params = {"max_depth": 30}
+    # selected_model = ModelType.DECISION_TREE
+    # model_params = {"max_depth": 30}
       
     # selected_model = ModelType.RANDOM_FOREST
     # model_params = { "n_estimators": 150,  "max_depth": 20, "random_state": 42}
