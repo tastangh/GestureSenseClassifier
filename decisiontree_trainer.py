@@ -1,22 +1,20 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import log_loss, accuracy_score
 
-class LogRegTrainer:
-    
+class DecisionTreeTrainer:
     """
-    Lojistik Regresyon model eğitimi ve metrik grafiği çizimi için sınıf.
+    Decision Tree modelini eğitmek ve metrik grafikleri çizmek için bir sınıf.
     """
-    
-    def __init__(self, max_iter=1000, random_state=42, class_weight="balanced"):
+    def __init__(self, max_depth=None, random_state=42, class_weight=None):
         """
-        LogRegTrainer sınıfını başlatır.
-        :param max_iter: Maksimum iterasyon sayısı
+        DecisionTreeTrainer sınıfını başlatır.
+        :param max_depth: Maksimum derinlik
         :param random_state: Rastgelelik kontrolü için sabit bir değer
         :param class_weight: Sınıf ağırlıkları ('balanced' veya None)
         """
-        self.model = LogisticRegression(max_iter=max_iter, random_state=random_state, class_weight=class_weight)
+        self.model = DecisionTreeClassifier(max_depth=max_depth, random_state=random_state, class_weight=class_weight)
         self.train_loss = None
         self.val_loss = None
         self.train_accuracy = None
@@ -60,3 +58,30 @@ class LogRegTrainer:
         """
         return self.model.predict(X_test)
 
+    def plot_metrics(self):
+        """
+        Eğitim ve doğrulama kayıp/doğruluk metriklerini çizer.
+        """
+        if self.train_loss is None:
+            print("Henüz eğitim metrikleri mevcut değil!")
+            return
+
+        metrics = ["Kaybı", "Doğruluk"]
+        values = [self.train_loss, self.train_accuracy]
+        if self.val_loss is not None:
+            values += [self.val_loss, self.val_accuracy]
+
+        plt.figure(figsize=(8, 6))
+        bars = plt.bar(metrics[:len(values)], values, color=['blue', 'green', 'red', 'orange'])
+        plt.title("Eğitim ve Doğrulama Metrikleri")
+        plt.ylabel("Değer")
+        plt.ylim(0, 1.1)
+        for bar in bars:
+            yval = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width()/2, yval, f'{yval:.4f}', ha='center', va='bottom')
+        plt.show()
+
+# Örnek Kullanım
+# trainer = DecisionTreeTrainer(max_depth=5)
+# trainer.train(X_train, y_train, X_val=X_val, y_val=y_val)
+# trainer.plot_metrics()
