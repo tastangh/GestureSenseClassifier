@@ -227,7 +227,14 @@ def main(file_path, selected_model, model_params):
 
     # Özellik çıkarma
     print("Özellikler çıkarılıyor...")
-    features, labels = DatasetFeatureExtractor.extract_features(filtered_data, channels,window_size=200)
+    features, labels = DatasetFeatureExtractor.extract_features(
+        filtered_data, 
+        channels,
+        window_size=200,
+        feature_set=model_params.get("feature_set", "advanced"), # Varsayılan 'advanced'
+        n_components=model_params.get("n_components"), #  PCA bileşen sayısı
+        k_best=model_params.get("k_best") # SelectKBest özellik sayısı
+    )
 
     # Veri dengeleme
     print("Veri SMOTE ile dengeleniyor...")
@@ -260,13 +267,13 @@ if __name__ == "__main__":
     # model_params = { "random_state": 42, "optimize": True, "n_trials": 5,  "class_weight": "balanced"}
     
     # selected_model = ModelType.ANN
-    # model_params = {"random_state": 42, "optimize": True, "n_trials": 5, "epochs": 20, "batch_size": 64 } 
+    # model_params = {"random_state": 42, "optimize": True, "n_trials": 5, "epochs": 20, "batch_size": 64, "feature_set": "advanced", "n_components": 10} 
     
     # selected_model = ModelType.LSTM
-    # model_params = { "time_steps":8 , "random_state": 42, "optimize": True, "n_trials": 5, "epochs": 10, "batch_size": 90 }
+    # model_params = { "time_steps":8 , "random_state": 42, "optimize": True, "n_trials": 5, "epochs": 10, "batch_size": 90, "feature_set": "frequency" }
      
     # selected_model = ModelType.SVM
-    # model_params = {"random_state": 42, "optimize": True, "n_trials": 5}   
+    # model_params = {"random_state": 42, "optimize": True, "n_trials": 5, "feature_set": "time" }   
     
     baslangic = time.time()
     main(dataset_path, selected_model=selected_model, model_params=model_params)
