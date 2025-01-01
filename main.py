@@ -10,7 +10,6 @@ from dataset_cleaner import DatasetCleaner
 from dataset_balancer import DatasetBalancer
 from dataset_feature_extractor import DatasetFeatureExtractor
 from dataset_scaler import DatasetScaler
-from log_reg_trainer import LogRegTrainer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
@@ -35,7 +34,6 @@ class ModelType(Enum):
     
     # Artificial Neural Networks - Yapay Sinir Ağları
     ANN = "ANN"
-    
     
 def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output_dir):
     
@@ -187,7 +185,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
     else:
         print("Geçersiz model türü seçildi!")
 
-def main(file_path, selected_model, model_params):
+def main(file_path, selected_models):
     
     output_dir = "./output"
     if not os.path.exists(output_dir):
@@ -246,9 +244,11 @@ def main(file_path, selected_model, model_params):
     X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, stratify=labels, random_state=42)
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
-
-    run_model(selected_model, model_params, X_train, y_train, X_test, y_test, output_dir="./output")
-
+    
+    # Tüm Modelleri Eğitim Döngüsü
+    for model_type, model_params in selected_models:
+        run_model(model_type, model_params, X_train, y_train, X_test, y_test, output_dir="./output")
+    
     # Sonuçların kaydedilmesi
     print(f"Model eğitimi ve değerlendirme başarıyla tamamlandı. Sonuçlar '{output_dir}' klasörüne kaydedildi.")
 
@@ -256,26 +256,18 @@ if __name__ == "__main__":
     
     dataset_path = "dataset/EMG-data.csv" 
     
-    selected_model = ModelType.LOGISTIC_REGRESSION
-    model_params = {"max_iter": 250}
-    
-    # selected_model = ModelType.DECISION_TREE
-    # model_params = {"max_depth": 30}
-      
-    # selected_model = ModelType.RANDOM_FOREST
-    # model_params = { "n_estimators": 150,  "max_depth": 20, "random_state": 42}
-    
-    # selected_model = ModelType.ANN
-    # model_params = {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64 } 
-    
-    # selected_model = ModelType.LSTM
-    # model_params = { "time_steps":8 , "lstm_units": 64,"epochs": 10, "batch_size": 90 }
-     
-    # selected_model = ModelType.SVM
-    # model_params = {"kernel": "linear", "C": 1.0,"random_state": 42}   
+    # Model parametreleri ve hangi modelin çalıştırılacağını belirleme
+    selected_models = [
+        (ModelType.LOGISTIC_REGRESSION, {"max_iter": 250}), # Logistic Regression
+        (ModelType.DECISION_TREE, {"max_depth": 30}), # Decision Tree
+        (ModelType.RANDOM_FOREST, { "n_estimators": 150,  "max_depth": 20, "random_state": 42}), # Random Forest
+        (ModelType.ANN, {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64 }), # ANN
+        (ModelType.LSTM, { "time_steps":8 , "lstm_units": 64,"epochs": 10, "batch_size": 90 }), # LSTM
+        (ModelType.SVM, {"kernel": "linear", "C": 1.0,"random_state": 42}) # SVM 
+    ]
     
     baslangic = time.time()
-    main(dataset_path, selected_model=selected_model, model_params=model_params)
+    main(dataset_path, selected_models=selected_models)
     bitis = time.time()
     
     # print("SVM Model :", bitis-baslangic)
