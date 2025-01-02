@@ -154,36 +154,41 @@ class LogRegTrainer:
             predictions = self.model.predict(X_test)
         return np.argmax(predictions, axis=1)
 
-    def plot_metrics(self):
-        """
-        Eğitim ve doğrulama kayıp/doğruluk metriklerini çizer.
-        """
-        if self.history is None:
-            print("Henüz eğitim metrikleri mevcut değil!")
-            return
+    def plot_metrics(self, model_name, model_params):
+            """
+            Eğitim ve doğrulama kayıp/doğruluk metriklerini çizer.
+            :param model_name: Modelin adı
+            :param model_params: Modelin parametreleri (sözlük formatında)
+            """
+            if self.history is None:
+                print("Henüz eğitim metrikleri mevcut değil!")
+                return
 
-        history = self.history
+            history = self.history
+            
+            # Parametreleri dosya adına dahil et
+            params_str = "_".join([f"{key}-{value}" for key, value in model_params.items()])
 
-        # Kayıp grafiği
-        plt.figure(figsize=(8, 6))
-        plt.plot(history['loss'], label='Eğitim Kaybı')
-        if 'val_loss' in history:
-            plt.plot(history['val_loss'], label='Doğrulama Kaybı')
-        plt.title("Eğitim ve Doğrulama Kaybı")
-        plt.xlabel("Epoch")
-        plt.ylabel("Kayıp")
-        plt.legend()
-        plt.savefig(os.path.join(self.output_dir, "logreg_loss_plot.png"))
-        plt.close()
+            # Kayıp grafiği
+            plt.figure(figsize=(8, 6))
+            plt.plot(history['loss'], label='Eğitim Kaybı')
+            if 'val_loss' in history:
+                plt.plot(history['val_loss'], label='Doğrulama Kaybı')
+            plt.title("Eğitim ve Doğrulama Kaybı")
+            plt.xlabel("Epoch")
+            plt.ylabel("Kayıp")
+            plt.legend()
+            plt.savefig(os.path.join(self.output_dir, f"{model_name}_loss_plot_{params_str}.png"))
+            plt.close()
 
-        # Doğruluk grafiği
-        plt.figure(figsize=(8, 6))
-        plt.plot(history['accuracy'], label='Eğitim Doğruluk')
-        if 'val_accuracy' in history:
-            plt.plot(history['val_accuracy'], label='Doğrulama Doğruluk')
-        plt.title("Eğitim ve Doğrulama Doğruluk")
-        plt.xlabel("Epoch")
-        plt.ylabel("Doğruluk")
-        plt.legend()
-        plt.savefig(os.path.join(self.output_dir, "logreg_accuracy_plot.png"))
-        plt.close()
+            # Doğruluk grafiği
+            plt.figure(figsize=(8, 6))
+            plt.plot(history['accuracy'], label='Eğitim Doğruluk')
+            if 'val_accuracy' in history:
+                plt.plot(history['val_accuracy'], label='Doğrulama Doğruluk')
+            plt.title("Eğitim ve Doğrulama Doğruluk")
+            plt.xlabel("Epoch")
+            plt.ylabel("Doğruluk")
+            plt.legend()
+            plt.savefig(os.path.join(self.output_dir, f"{model_name}_accuracy_plot_{params_str}.png"))
+            plt.close()

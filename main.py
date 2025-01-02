@@ -75,7 +75,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
         y_pred = trainer.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
         print(f"Test Doğruluğu: {accuracy * 100:.2f}%")
-
+        
         save_results_to_excel(
             output_dir,
             "LogisticRegression",
@@ -90,7 +90,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
               "StandardScaler", # Ölçeklendirme türü
              "SMOTE" # Dengeleme türünü ekledik.
         )
-        trainer.plot_metrics()
+        trainer.plot_metrics("LogisticRegression", model_params) # Model adı ve parametrelerini ekledik.
 
     elif model_type == ModelType.DECISION_TREE:
         print("Decision Tree modeli eğitiliyor...")
@@ -113,7 +113,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
                               "StandardScaler", # Ölçeklendirme türü
                              "SMOTE" # Dengeleme türünü ekledik.
                             )
-        dt_trainer.plot_metrics()
+        dt_trainer.plot_metrics("DecisionTree", model_params)
 
     elif model_type == ModelType.LSTM:
         print("LSTM modeli için veri hazırlanıyor...")
@@ -134,7 +134,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
 
         print("LSTM modeli eğitiliyor...")
         num_classes = len(np.unique(y_train))
-        lstm_trainer = LSTMTrainer(input_shape=(time_steps, num_features), num_classes=num_classes, lstm_units=64, output_dir=output_dir)
+        lstm_trainer = LSTMTrainer(input_shape=(time_steps, num_features), num_classes=num_classes, lstm_units=model_params.get("lstm_units", 64), output_dir=output_dir)
         lstm_trainer.train(
             X_train_lstm, y_train, X_val=X_test_lstm, y_val=y_test,
             epochs=model_params.get("epochs", 10),
@@ -166,7 +166,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
               "StandardScaler", # Ölçeklendirme türü
              "SMOTE" # Dengeleme türünü ekledik.
         )
-        lstm_trainer.plot_metrics()
+        lstm_trainer.plot_metrics("LSTM", model_params)
 
     elif model_type == ModelType.RANDOM_FOREST:
       print("Random Forest modeli eğitiliyor...")
@@ -197,7 +197,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
               "StandardScaler", # Ölçeklendirme türü
              "SMOTE" # Dengeleme türünü ekledik.
         )
-      rf_trainer.plot_metrics()
+      rf_trainer.plot_metrics("RandomForest", model_params)
 
 
     elif model_type == ModelType.SVM:
@@ -228,7 +228,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
               "StandardScaler", # Ölçeklendirme türü
              "SMOTE" # Dengeleme türünü ekledik.
         )
-        svm_trainer.plot_metrics()
+        svm_trainer.plot_metrics("SVM", model_params)
 
     elif model_type == ModelType.ANN:
         print("Yapay Sinir Ağları (ANN) modeli eğitiliyor...")
@@ -273,7 +273,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
               "StandardScaler", # Ölçeklendirme türü
              "SMOTE" # Dengeleme türünü ekledik.
         )
-        ann_trainer.plot_metrics()
+        ann_trainer.plot_metrics("ANN", model_params)
 
     else:
         print("Geçersiz model türü seçildi!")
@@ -379,32 +379,32 @@ if __name__ == "__main__":
     # Model parametreleri ve hangi modelin çalıştırılacağını belirleme
     selected_models = [
         (ModelType.LOGISTIC_REGRESSION, {
-            "learning_rate": [0.001, 0.0001],
-            "epochs": [10, 20],
-            "batch_size": [32, 64],
-            "optimizer_type": ["adam", "sgd"],
-            "early_stopping": [True, False],
-            "patience": [5, 10],
-            "learning_rate_scheduling": [True, False],
-            "factor": [0.1, 0.2],
-            "min_lr": [1e-6, 1e-5]
+            "learning_rate": [0.001, 0.0005, 0.0001, 0.00005],
+            "epochs": [10, 20, 30, 40],
+            "batch_size": [32, 64, 128],
+            "optimizer_type": ["adam", "sgd", "rmsprop"],
+            "early_stopping": [True],
+            "patience": [5, 10, 15],
+            "learning_rate_scheduling": [True],
+            "factor": [0.1, 0.2, 0.3],
+            "min_lr": [1e-6, 1e-5, 1e-4]
         }),
-         (ModelType.DECISION_TREE, { "max_depth": [20, 30]}), # Decision Tree
-        (ModelType.RANDOM_FOREST, { "n_estimators": [100, 150],  "max_depth": [10, 20], "random_state": [42]}), # Random Forest
-         (ModelType.ANN, {"hidden_layers": [[32], [64, 32]], "dropout_rate": [0.2, 0.3], "learning_rate": [0.01, 0.001], "epochs": [10, 20], "batch_size": [32, 64] ,
-                          "early_stopping": [True, False],
-                          "patience": [5, 10],
-                          "learning_rate_scheduling": [True, False],
-                          "factor": [0.1, 0.2],
-                          "min_lr": [1e-6, 1e-5]}), # ANN
-         (ModelType.LSTM, { "time_steps":[8] , "lstm_units": [64, 128],"epochs": [10, 20], "batch_size": [64, 90] ,
-                           "learning_rate": [0.001, 0.0005],
-                           "early_stopping": [True, False],
-                           "patience": [5, 10],
-                           "learning_rate_scheduling": [True, False],
-                           "factor": [0.1, 0.2],
-                           "min_lr": [1e-6, 1e-5]}), # LSTM
-        (ModelType.SVM, {"C": [0.1, 1.0], "random_state": [42]}) # SVM
+        (ModelType.DECISION_TREE, { "max_depth": [10, 20, 30, 40, None]}), # Decision Tree
+        (ModelType.RANDOM_FOREST, { "n_estimators": [100, 150, 200, 250],  "max_depth": [10, 15, 20, None], "random_state": [42, 123]}), # Random Forest
+         (ModelType.ANN, {"hidden_layers": [[32], [64, 32], [128, 64, 32]], "dropout_rate": [0.1, 0.2, 0.3, 0.4], "learning_rate": [0.01, 0.001, 0.0005], "epochs": [20, 30, 40, 50], "batch_size": [32, 64, 128] ,
+                          "early_stopping": [True],
+                          "patience": [5, 10, 15],
+                          "learning_rate_scheduling": [True],
+                          "factor": [0.1, 0.2, 0.3],
+                          "min_lr": [1e-6, 1e-5, 1e-4]}), # ANN
+         (ModelType.LSTM, { "time_steps":[8, 10] , "lstm_units": [64, 128, 256],"epochs": [20, 30, 40, 50], "batch_size": [64, 90, 128] ,
+                           "learning_rate": [0.001, 0.0005, 0.0001],
+                           "early_stopping": [True],
+                           "patience": [5, 10, 15],
+                           "learning_rate_scheduling": [True],
+                           "factor": [0.1, 0.2, 0.3],
+                           "min_lr": [1e-6, 1e-5, 1e-4]}), # LSTM
+        (ModelType.SVM, {"C": [0.1, 0.5, 1.0, 2.0], "kernel": ["linear", "rbf"], "random_state": [42, 123]}) # SVM
     ]
     
     

@@ -148,15 +148,20 @@ class LSTMTrainer:
         predictions = self.model.predict(X_test)
         return np.argmax(predictions, axis=1)
 
-    def plot_metrics(self):
+    def plot_metrics(self, model_name, model_params):
         """
-        Eğitim ve doğrulama kayıp/doğruluk metriklerini çizer.
+        Eğitim ve doğrulama kayıp/doğruluk metriklerini çizer ve kaydeder.
+         :param model_name: Modelin adı
+        :param model_params: Modelin parametreleri (sözlük formatında)
         """
         if self.history is None:
             print("Henüz eğitim metrikleri mevcut değil!")
             return
 
         history = self.history
+        
+         # Parametreleri dosya adına dahil et
+        params_str = "_".join([f"{key}-{value}" for key, value in model_params.items()])
 
         # Kayıp grafiği
         plt.figure(figsize=(8, 6))
@@ -167,7 +172,8 @@ class LSTMTrainer:
         plt.xlabel("Epoch")
         plt.ylabel("Kayıp")
         plt.legend()
-        plt.savefig(os.path.join(self.output_dir, "lstm_loss_plot.png"))
+        loss_plot_path = os.path.join(self.output_dir, f"{model_name}_loss_{params_str}.png")
+        plt.savefig(loss_plot_path)
         plt.close()
 
         # Doğruluk grafiği
@@ -179,5 +185,6 @@ class LSTMTrainer:
         plt.xlabel("Epoch")
         plt.ylabel("Doğruluk")
         plt.legend()
-        plt.savefig(os.path.join(self.output_dir, "lstm_accuracy_plot.png"))
+        accuracy_plot_path = os.path.join(self.output_dir, f"{model_name}_accuracy_{params_str}.png")
+        plt.savefig(accuracy_plot_path)
         plt.close()

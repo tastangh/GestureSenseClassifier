@@ -98,15 +98,20 @@ class SVMTrainer:
       predictions = self.model.predict(X_test)
       return np.argmax(predictions, axis=1)
 
-    def plot_metrics(self):
+    def plot_metrics(self, model_name, model_params):
         """
         Eğitim ve doğrulama kayıp/doğruluk metriklerini çizer.
+        :param model_name: Modelin adı
+        :param model_params: Modelin parametreleri (sözlük formatında)
         """
         if self.history is None:
             print("Henüz eğitim metrikleri mevcut değil!")
             return
-
+        
         history = self.history
+        
+        # Parametreleri dosya adına dahil et
+        params_str = "_".join([f"{key}-{value}" for key, value in model_params.items()])
 
         # Kayıp grafiği
         plt.figure(figsize=(8, 6))
@@ -117,7 +122,7 @@ class SVMTrainer:
         plt.xlabel("Epoch")
         plt.ylabel("Kayıp")
         plt.legend()
-        plt.savefig(os.path.join(self.output_dir, "svm_loss_plot.png"))
+        plt.savefig(os.path.join(self.output_dir, f"tf_randomforest_loss_plot_{params_str}.png"))
         plt.close()
 
         # Doğruluk grafiği
@@ -129,5 +134,5 @@ class SVMTrainer:
         plt.xlabel("Epoch")
         plt.ylabel("Doğruluk")
         plt.legend()
-        plt.savefig(os.path.join(self.output_dir, "svm_accuracy_plot.png"))
+        plt.savefig(os.path.join(self.output_dir, f"tf_randomforest_accuracy_plot_{params_str}.png"))
         plt.close()
