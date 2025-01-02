@@ -379,34 +379,33 @@ if __name__ == "__main__":
     # Model parametreleri ve hangi modelin çalıştırılacağını belirleme
     selected_models = [
         (ModelType.LOGISTIC_REGRESSION, {
-            "learning_rate": [0.001, 0.0005, 0.0001, 0.00005],
-            "epochs": [10, 20, 30, 40],
-            "batch_size": [32, 64, 128],
-            "optimizer_type": ["adam", "sgd", "rmsprop"],
-            "early_stopping": [True],
-            "patience": [5, 10, 15],
-            "learning_rate_scheduling": [True],
-            "factor": [0.1, 0.2, 0.3],
-            "min_lr": [1e-6, 1e-5, 1e-4]
+            "learning_rate": 0.001,
+            "epochs": 10,
+            "batch_size": 32,
+            "optimizer_type": "adam",
+            "early_stopping": True,
+            "patience": 10,
+            "learning_rate_scheduling": True,
+            "factor": 0.1,
+            "min_lr": 1e-6
         }),
-        (ModelType.DECISION_TREE, { "max_depth": [10, 20, 30, 40, None]}), # Decision Tree
-        (ModelType.RANDOM_FOREST, { "n_estimators": [100, 150, 200, 250],  "max_depth": [10, 15, 20, None], "random_state": [42, 123]}), # Random Forest
-         (ModelType.ANN, {"hidden_layers": [[32], [64, 32], [128, 64, 32]], "dropout_rate": [0.1, 0.2, 0.3, 0.4], "learning_rate": [0.01, 0.001, 0.0005], "epochs": [20, 30, 40, 50], "batch_size": [32, 64, 128] ,
-                          "early_stopping": [True],
-                          "patience": [5, 10, 15],
-                          "learning_rate_scheduling": [True],
-                          "factor": [0.1, 0.2, 0.3],
-                          "min_lr": [1e-6, 1e-5, 1e-4]}), # ANN
-         (ModelType.LSTM, { "time_steps":[8, 10] , "lstm_units": [64, 128, 256],"epochs": [20, 30, 40, 50], "batch_size": [64, 90, 128] ,
-                           "learning_rate": [0.001, 0.0005, 0.0001],
-                           "early_stopping": [True],
-                           "patience": [5, 10, 15],
-                           "learning_rate_scheduling": [True],
-                           "factor": [0.1, 0.2, 0.3],
-                           "min_lr": [1e-6, 1e-5, 1e-4]}), # LSTM
-        (ModelType.SVM, {"C": [0.1, 0.5, 1.0, 2.0], "kernel": ["linear", "rbf"], "random_state": [42, 123]}) # SVM
+        (ModelType.DECISION_TREE, {"max_depth": 30}), # Decision Tree
+        (ModelType.RANDOM_FOREST, { "n_estimators": 150,  "max_depth": 20, "random_state": 42}), # Random Forest
+         (ModelType.ANN, {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64 ,
+                          "early_stopping": True,
+                          "patience": 10,
+                          "learning_rate_scheduling": True,
+                          "factor": 0.1,
+                          "min_lr": 1e-6}), # ANN
+        (ModelType.LSTM, { "time_steps":8 , "lstm_units": 64,"epochs": 10, "batch_size": 90 ,
+                           "learning_rate": 0.001,
+                           "early_stopping": True,
+                           "patience": 10,
+                           "learning_rate_scheduling": True,
+                           "factor": 0.1,
+                           "min_lr": 1e-6}), # LSTM
+       (ModelType.SVM, {"kernel": "linear", "C": 1.0,"random_state": 42}) # SVM
     ]
-    
     
     all_model_params = []
     for model_type, params in selected_models:
