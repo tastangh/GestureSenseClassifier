@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from scipy.signal import butter, filtfilt
+from scipy.signal import butter, filtfilt, iirnotch
 import matplotlib.pyplot as plt
 import os
 
@@ -23,14 +23,15 @@ class DatasetFilter:
         self.filtered_data = data.copy()
 
     @staticmethod
-    def apply_filter(signal, filter_type, cutoff, order=4, sampling_rate=1000):
+    def apply_filter(signal, filter_type, cutoff, order=4, sampling_rate=1000, notch_freq=None):
         """
         Sinyale filtre uygular.
         :param signal: Tek kanal sinyali (numpy array)
-        :param filter_type: 'low', 'high', veya 'band'
+        :param filter_type: 'low', 'high', 'band', veya 'notch'
         :param cutoff: Kesim frekansı (low/high için tek değer, band için [low, high])
         :param order: Filtre düzeni
         :param sampling_rate: Örnekleme frekansı
+        :param notch_freq: Notch filtre için kesim frekansı (isteğe bağlı)
         :return: Filtrelenmiş sinyal
         """
         nyquist = 0.5 * sampling_rate
@@ -43,22 +44,38 @@ class DatasetFilter:
         elif filter_type == "band":
             normalized_cutoff = [freq / nyquist for freq in cutoff]
             b, a = butter(order, normalized_cutoff, btype="band")
+        elif filter_type == "notch" and notch_freq is not None:
+            Q = 30  # Notch filtre kalitesi
+            normalized_freq = notch_freq / nyquist
+            b, a = iirnotch(normalized_freq, Q, sampling_rate)
         else:
-            raise ValueError("Hatalı filtre türü! 'low', 'high' veya 'band' kullanın.")
+            raise ValueError("Hatalı filtre türü! 'low', 'high', 'band' veya 'notch' kullanın.")
         return filtfilt(b, a, signal)
+    
 
-    def filter_all_channels(self, filter_type="band", cutoff=(20, 450), order=4):
+    def filter_all_channels(self, filter_type="band", cutoff=(20, 450), order=4, apply_notch=False, notch_freq=50):
         """
         Tüm kanallara filtre uygular ve filtrelenmiş veriyi saklar.
         :param filter_type: Filtre türü ('low', 'high', veya 'band')
         :param cutoff: Kesim frekansı
         :param order: Filtre düzeni
+        :param apply_notch: Notch filtresi uygulanıp uygulanmayacağı (bool)
+        :param notch_freq: Notch filtre frekansı (Hz)
         """
         for channel in self.channels:
             self.filtered_data[channel] = self.apply_filter(
                 self.data[channel], filter_type, cutoff, order, self.sampling_rate
             )
+        
+        if apply_notch:
+            for channel in self.channels:
+                 self.filtered_data[channel] = self.apply_filter(
+                self.filtered_data[channel], "notch", None, order=4, sampling_rate=self.sampling_rate, notch_freq=notch_freq
+            )
         print(f"Tüm kanallar için {filter_type} filtre uygulandı.")
+        if apply_notch:
+          print(f"Tüm kanallar için {notch_freq}Hz notch filtresi uygulandı.")
+
 
     def plot_frequency_spectrum(self, signals, filtered_signals, titles, output_path):
         """
@@ -87,6 +104,7 @@ class DatasetFilter:
             axes[i].set_ylabel("Genlik", fontsize=8, labelpad=5)
             axes[i].legend(fontsize=8)
             axes[i].grid()
+            axes[i].set_xscale('log') # Logaritmik eksen
 
         for ax in axes[len(signals):]:
             ax.axis('off')
@@ -135,7 +153,6 @@ class DatasetFilter:
         """
         return self.filtered_data
 
-
 if __name__ == "__main__":
     file_path = "./dataset/EMG-data.csv"
     data = pd.read_csv(file_path)
@@ -143,11 +160,15 @@ if __name__ == "__main__":
 
     channels = [f"channel{i}" for i in range(1, 9)]
     sampling_rate = 1000
+    output_dir = "./output"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        print(f"'{output_dir}' klasörü oluşturuldu.")
 
     processor = DatasetFilter(data, channels, sampling_rate=sampling_rate)
 
     print("\nTüm kanallar için band geçiren filtre uygulanıyor...")
-    processor.filter_all_channels(filter_type="band", cutoff=(20, 450), order=4)
+    processor.filter_all_channels(filter_type="band", cutoff=(20, 450), order=4, apply_notch=True, notch_freq=50)
 
     print("\nTüm kanallar için frekans spektrumları çiziliyor...")
     processor.plot_frequency_spectrum(
@@ -166,7 +187,7 @@ if __name__ == "__main__":
         start=0,
         end=1000
     )
-
-    output_path = "./dataset/filtered_emg_data.csv"
+    
+    output_path = os.path.join(output_dir,"filtered_emg_data.csv")
     processor.get_filtered_data().to_csv(output_path, index=False)
     print(f"Filtrelenmiş veri seti kaydedildi: {output_path}")

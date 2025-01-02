@@ -42,20 +42,17 @@ if gpus:
         print(e)
 
 
-
 class ModelType(Enum):
-    
     LOGISTIC_REGRESSION = "LogisticRegression"
     DECISION_TREE = "DecisionTree"
     RANDOM_FOREST = "RandomForest"
     LSTM = "LSTM"
     SVM = "SVM"
-    
     # Artificial Neural Networks - Yapay Sinir Ağları
     ANN = "ANN"
-    
+
+
 def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output_dir):
-    
     if model_type == ModelType.LOGISTIC_REGRESSION:
         print("Lojistik regresyon modeli eğitiliyor...")
         num_classes = len(np.unique(y_train))
@@ -69,20 +66,20 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
                       patience=model_params.get("patience", 3),
                       learning_rate_scheduling=model_params.get("learning_rate_scheduling", False),
                       factor=model_params.get("factor", 0.1),
-                      min_lr = model_params.get("min_lr",1e-6)
+                      min_lr=model_params.get("min_lr", 1e-6)
                       )
 
         print("Model değerlendiriliyor...")
         y_pred = trainer.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
         print(f"Test Doğruluğu: {accuracy * 100:.2f}%")
-        
+
         save_results_to_excel(
             output_dir,
             "LogisticRegression",
             model_params,
             trainer.history['loss'][-1],  # Son epoch'un loss değeri
-            trainer.history['accuracy'][-1], # Son epoch'un accuracy değeri
+            trainer.history['accuracy'][-1],  # Son epoch'un accuracy değeri
             trainer.history['val_loss'][-1] if 'val_loss' in trainer.history else None,
             trainer.history['val_accuracy'][-1] if 'val_accuracy' in trainer.history else None
         )
@@ -97,19 +94,21 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
         y_pred_dt = dt_trainer.predict(X_test)
         accuracy_dt = accuracy_score(y_test, y_pred_dt)
         print(f"Decision Tree Test Doğruluğu: {accuracy_dt * 100:.2f}%")
-        
-        save_results_to_excel(output_dir, "DecisionTree", model_params, dt_trainer.train_loss, dt_trainer.train_accuracy, dt_trainer.val_loss, dt_trainer.val_accuracy)
+
+        save_results_to_excel(output_dir, "DecisionTree", model_params, dt_trainer.train_loss, dt_trainer.train_accuracy,
+                              dt_trainer.val_loss, dt_trainer.val_accuracy)
 
     elif model_type == ModelType.LSTM:
         print("LSTM modeli için veri hazırlanıyor...")
-        
+
         time_steps = model_params["time_steps"]
         total_features = X_train.shape[1]
 
         # time_steps ile uyumlu num_features hesaplanıyor
         if total_features % time_steps != 0:
-            raise ValueError(f"Özellik sayısı ({total_features}) time_steps ({time_steps}) ile uyumlu değil. time_steps değerini değiştirin.")
-        
+            raise ValueError(
+                f"Özellik sayısı ({total_features}) time_steps ({time_steps}) ile uyumlu değil. time_steps değerini değiştirin.")
+
         num_features = total_features // time_steps
 
         # X_train ve X_test yeniden şekillendiriliyor
@@ -139,7 +138,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
             lstm_trainer.history.history['val_accuracy'][-1]
         )
         lstm_trainer.plot_metrics()
-        
+
     elif model_type == ModelType.RANDOM_FOREST:
         print("Random Forest modeli eğitiliyor...")
         rf_trainer = RandomForestTrainer(
@@ -164,7 +163,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
             rf_trainer.val_loss,
             rf_trainer.val_accuracy
         )
-        
+
     elif model_type == ModelType.SVM:
         print("SVM modeli eğitiliyor...")
         svm_trainer = SVMTrainer(
@@ -189,7 +188,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
             val_loss=None,  # SVM için `val_loss` hesaplanmaz
             val_accuracy=svm_trainer.val_accuracy
         )
-        
+
     elif model_type == ModelType.ANN:
         print("Yapay Sinir Ağları (ANN) modeli eğitiliyor...")
         ann_trainer = ANNTrainer(
@@ -225,13 +224,39 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
     else:
         print("Geçersiz model türü seçildi!")
 
-def main(file_path, selected_models):
-    
+
+def test_filter_settings(data, channels, sampling_rate, filter_type, cutoff, order, apply_notch, notch_freq, show_plots=True, output_dir="./output"):
+
+    filter_processor = DatasetFilter(data, channels, sampling_rate)
+    filter_processor.filter_all_channels(filter_type=filter_type, cutoff=cutoff, order=order, apply_notch=apply_notch, notch_freq=notch_freq)
+    filtered_data = filter_processor.get_filtered_data()
+
+    if show_plots:
+        frequency_plot_path = os.path.join(output_dir, f"frequency_spectra_{filter_type}.png")
+        filter_processor.plot_frequency_spectrum(
+            signals=[data[channel] for channel in channels],
+            filtered_signals=[filtered_data[channel] for channel in channels],
+            titles=[f"{channel} - Frekans Spektrumu" for channel in channels],
+            output_path=frequency_plot_path
+        )
+
+        time_plot_path = os.path.join(output_dir, f"time_domain_signals_{filter_type}.png")
+        filter_processor.plot_signals(
+            signals=[data[channel] for channel in channels],
+            filtered_signals=[filtered_data[channel] for channel in channels],
+            titles=[f"{channel} - Zaman Domeni Sinyalleri" for channel in channels],
+            output_path=time_plot_path,
+            start=0,
+            end=1000
+        )
+    return filtered_data
+
+
+def main(file_path, selected_models, filter_params):
     output_dir = "./output"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         print(f"'{output_dir}' klasörü oluşturuldu.")
-
 
     # Veri yükleme
     print("Veri yükleniyor...")
@@ -244,36 +269,20 @@ def main(file_path, selected_models):
     data = cleaner.drop_columns(data, columns=["label"])
 
     # Filtreleme işlemi
-    print("Tüm kanallar için band geçiren filtre uygulanıyor...")
-    filter_processor = DatasetFilter(data, channels, sampling_rate=1000)
-    filter_processor.filter_all_channels(filter_type="band", cutoff=(1, 499), order=4)
-    filtered_data = filter_processor.get_filtered_data()
-
-    # Grafikler
-    print("\nTüm kanallar için frekans spektrumları çiziliyor...")
-    # frequency_plot_path = os.path.join(output_dir, "frequency_spectra.png")
-    # filter_processor.plot_frequency_spectrum(
-    #     signals=[data[channel] for channel in channels],
-    #     filtered_signals=[filtered_data[channel] for channel in channels],
-    #     titles=[f"{channel} - Frekans Spektrumu" for channel in channels],
-    #     output_path=frequency_plot_path
-    # )
-
-    # print("\nTüm kanallar için zaman domeni sinyalleri çiziliyor...")
-    # time_plot_path = os.path.join(output_dir, "time_domain_signals.png")
-    # filter_processor.plot_signals(
-    #     signals=[data[channel] for channel in channels],
-    #     filtered_signals=[filtered_data[channel] for channel in channels],
-    #     titles=[f"{channel} - Zaman Domeni Sinyalleri" for channel in channels],
-    #     output_path=time_plot_path,
-    #     start=0,
-    #     end=1000
-    # )
+    print("Tüm kanallar için filtreleme işlemi yapılıyor...")
+    filtered_data = test_filter_settings(data, channels, sampling_rate=1000,
+                                        filter_type=filter_params["filter_type"],
+                                        cutoff=filter_params["cutoff"],
+                                        order=filter_params["order"],
+                                        apply_notch=filter_params["apply_notch"],
+                                        notch_freq=filter_params["notch_freq"],
+                                        show_plots=filter_params["show_plots"],
+                                        output_dir=output_dir)
 
     # Özellik çıkarma
     print("Özellikler çıkarılıyor...")
-    features, labels = DatasetFeatureExtractor.extract_features(filtered_data, channels,window_size=200)
-    
+    features, labels = DatasetFeatureExtractor.extract_features(filtered_data, channels, window_size=200)
+
     if np.isnan(features).any():
         print("Error: Features contain NaN values.")
     if np.isinf(features).any():
@@ -289,41 +298,50 @@ def main(file_path, selected_models):
     X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, stratify=labels, random_state=42)
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
-    
-    
+
     # Tüm Modelleri Eğitim Döngüsü
     for model_type, model_params in selected_models:
         run_model(model_type, model_params, X_train, y_train, X_test, y_test, output_dir=output_dir)
-    
+
     # Sonuçların kaydedilmesi
     print(f"Model eğitimi ve değerlendirme başarıyla tamamlandı. Sonuçlar '{output_dir}' klasörüne kaydedildi.")
 
+
 if __name__ == "__main__":
-    
-    dataset_path = "dataset/EMG-data.csv" 
-    
+    dataset_path = "dataset/EMG-data.csv"
+
+    # Filtre parametreleri
+    filter_params = {
+        "filter_type": "band",
+        "cutoff": (1, 499),
+        "order": 4,
+        "apply_notch": False,
+        "notch_freq": 50,
+        "show_plots": True
+    }
+
     # Model parametreleri ve hangi modelin çalıştırılacağını belirleme
     selected_models = [
-    (ModelType.LOGISTIC_REGRESSION, {
+        (ModelType.LOGISTIC_REGRESSION, {
             "learning_rate": 0.001,
             "epochs": 10,
             "batch_size": 32,
             "optimizer_type": "adam",
             "early_stopping": True,
             "patience": 10,
-            "learning_rate_scheduling":True,
+            "learning_rate_scheduling": True,
             "factor": 0.1,
-            "min_lr":1e-6
-        })   
+            "min_lr": 1e-6
+        })
         # (ModelType.DECISION_TREE, {"max_depth": 30}), # Decision Tree
         # (ModelType.RANDOM_FOREST, { "n_estimators": 150,  "max_depth": 20, "random_state": 42}), # Random Forest
         # (ModelType.ANN, {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64 }), # ANN
         # (ModelType.LSTM, { "time_steps":8 , "lstm_units": 64,"epochs": 10, "batch_size": 90 }), # LSTM
-        # (ModelType.SVM, {"kernel": "linear", "C": 1.0,"random_state": 42}) # SVM 
+        # (ModelType.SVM, {"kernel": "linear", "C": 1.0,"random_state": 42}) # SVM
     ]
-    
+
     baslangic = time.time()
-    main(dataset_path, selected_models=selected_models)
+    main(dataset_path, selected_models=selected_models, filter_params=filter_params)
     bitis = time.time()
-    
+
     # print("SVM Model :", bitis-baslangic)
