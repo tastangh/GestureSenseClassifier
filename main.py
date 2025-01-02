@@ -317,7 +317,7 @@ if __name__ == "__main__":
         "order": 4,
         "apply_notch": False,
         "notch_freq": 50,
-        "show_plots": True
+        "show_plots": False
     }
 
     # Model parametreleri ve hangi modelin çalıştırılacağını belirleme
