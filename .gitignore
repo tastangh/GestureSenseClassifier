@@ -1,2 +1,3 @@
 /gscenv
-EMG-data.csv
+*.csv
+/dataset
