@@ -202,9 +202,9 @@ if __name__ == "__main__":
     # Model parametreleri ve hangi modelin çalıştırılacağını belirleme
     selected_models = [
         (ModelType.LOGISTIC_REGRESSION, {
-            "learning_rate": [0.001, 0.01],
-            "epochs": [2, 3],
-            "batch_size": [32, 64],
+            "learning_rate": [0.001],
+            "epochs": [2],
+            "batch_size": [32],
             "optimizer_type": ["adam"],
             "early_stopping": [True],
             "patience": [10],
