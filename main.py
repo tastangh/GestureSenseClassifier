@@ -1,4 +1,3 @@
-# main.py
 import os
 import pandas as pd
 import numpy as np
@@ -28,20 +27,20 @@ from save_results import save_results_to_excel
 
 import tensorflow as tf
 
-# TensorFlow GPU memory limit configuration
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    try:
-        # Restrict TensorFlow to only use 10GB of GPU RAM
-        tf.config.experimental.set_virtual_device_configuration(
-            gpus[0],
-            [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=9000)]
-        )
-        logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-        print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
-    except RuntimeError as e:
-        # Virtual devices must be set before GPUs have been initialized
-        print(e)
+# # TensorFlow GPU memory limit configuration
+# gpus = tf.config.experimental.list_physical_devices('GPU')
+# if gpus:
+#     try:
+#         # Restrict TensorFlow to only use 10GB of GPU RAM
+#         tf.config.experimental.set_virtual_device_configuration(
+#             gpus[0],
+#             [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=9000)]
+#         )
+#         logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+#         print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+#     except RuntimeError as e:
+#         # Virtual devices must be set before GPUs have been initialized
+#         print(e)
 
 
 class ModelType(Enum):
@@ -54,12 +53,12 @@ class ModelType(Enum):
     ANN = "ANN"
 
 
-def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output_dir, filter_params):
+def run_model(model_type, model_params, X_train, y_train, X_val, y_val, X_test, y_test, output_dir, filter_params):
     if model_type == ModelType.LOGISTIC_REGRESSION:
         print("Lojistik regresyon modeli eğitiliyor...")
         num_classes = len(np.unique(y_train))
         trainer = LogRegTrainer(input_dim=X_train.shape[1], num_classes=num_classes, output_dir=output_dir)
-        trainer.train(X_train, y_train, X_val=X_test, y_val=y_test,
+        trainer.train(X_train, y_train, X_val=X_val, y_val=y_val,
                       epochs=model_params.get("epochs", 10),
                       batch_size=model_params.get("batch_size", 32),
                       optimizer_type=model_params.get("optimizer_type", "adam"),
@@ -96,7 +95,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
         print("Decision Tree modeli eğitiliyor...")
         num_classes = len(np.unique(y_train))
         dt_trainer = DecisionTreeTrainer(input_dim=X_train.shape[1], num_classes=num_classes, max_depth=model_params["max_depth"], output_dir=output_dir)
-        dt_trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
+        dt_trainer.train(X_train, y_train, X_val=X_val, y_val=y_val)
 
         print("Decision Tree modeli değerlendiriliyor...")
         y_pred_dt = dt_trainer.predict(X_test)
@@ -130,13 +129,14 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
 
         # X_train ve X_test yeniden şekillendiriliyor
         X_train_lstm = X_train.reshape(-1, time_steps, num_features)
+        X_val_lstm = X_val.reshape(-1, time_steps, num_features)
         X_test_lstm = X_test.reshape(-1, time_steps, num_features)
 
         print("LSTM modeli eğitiliyor...")
         num_classes = len(np.unique(y_train))
         lstm_trainer = LSTMTrainer(input_shape=(time_steps, num_features), num_classes=num_classes, lstm_units=64, output_dir=output_dir)
         lstm_trainer.train(
-            X_train_lstm, y_train, X_val=X_test_lstm, y_val=y_test,
+            X_train_lstm, y_train, X_val=X_val_lstm, y_val=y_val,
             epochs=model_params.get("epochs", 10),
             batch_size=model_params.get("batch_size", 32),
             learning_rate=model_params.get("learning_rate", 0.001),
@@ -175,7 +175,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
                                        n_estimators=model_params.get("n_estimators", 100),
                                         max_depth=model_params.get("max_depth", None),
                                         output_dir = output_dir)
-      rf_trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
+      rf_trainer.train(X_train, y_train, X_val=X_val, y_val=y_val)
 
       print("Random Forest modeli değerlendiriliyor...")
       y_pred_rf = rf_trainer.predict(X_test)
@@ -206,7 +206,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
         svm_trainer = SVMTrainer(input_dim=X_train.shape[1], num_classes = num_classes,
             C=model_params.get("C", 1.0), output_dir=output_dir
         )
-        svm_trainer.train(X_train, y_train, X_val=X_test, y_val=y_test)
+        svm_trainer.train(X_train, y_train, X_val=X_val, y_val=y_val)
 
         print("SVM modeli değerlendiriliyor...")
         y_pred_svm = svm_trainer.predict(X_test)
@@ -243,7 +243,7 @@ def run_model(model_type, model_params, X_train, y_train, X_test, y_test, output
         )
         ann_trainer.train(
             X_train, y_train,
-            X_val=X_test, y_val=y_test,
+            X_val=X_val, y_val=y_val,
             epochs=model_params.get("epochs", 10),
             batch_size=model_params.get("batch_size", 32),
             early_stopping=model_params.get("early_stopping", False),
@@ -312,17 +312,39 @@ def main(file_path, selected_models, filter_params):
         os.makedirs(output_dir)
         print(f"'{output_dir}' klasörü oluşturuldu.")
 
-    # Veri yükleme
+    # 1. Veri Yükleme
     print("Veri yükleniyor...")
     data = pd.read_csv(file_path)
     channels = [f"channel{i}" for i in range(1, 9)]
-
-    # Veri temizleme
+    
+    print("Veri Yükleme sonrası sınıf dağılımı:")
+    print(data['class'].value_counts())
+    
+    # 2. Veri Temizleme: Sınıfları ve sütunları kaldır
     print("Veri temizleme işlemi yapılıyor...")
     cleaner = DatasetCleaner()
+    
+    # Sınıfları sil
+    data = cleaner.drop_classes(data, [0, 7])
+    print("Sınıf silme sonrası sınıf dağılımı:")
+    print(data['class'].value_counts())
+    
+    # Gereksiz sütunları sil
     data = cleaner.drop_columns(data, columns=["label"])
+    print("Sütun silme sonrası sınıf dağılımı:")
+    print(data['class'].value_counts())
 
-    # Filtreleme işlemi
+    # 3. Veri Dengeleme
+    print("Veri SMOTE ile dengeleniyor...")
+    features, labels = DatasetFeatureExtractor.extract_features(data, channels, window_size=2)
+    balancer = DatasetBalancer()
+    features, labels = balancer.balance(features, labels)
+    print("Dengeleme sonrası sınıf dağılımı:")
+    unique_labels, counts = np.unique(labels, return_counts=True)
+    for label, count in zip(unique_labels, counts):
+        print(f"Sınıf {label}: {count} örnek")
+        
+    # 4. Filtreleme
     print("Tüm kanallar için filtreleme işlemi yapılıyor...")
     filtered_data = test_filter_settings(data, channels, sampling_rate=1000,
                                         filter_type=filter_params["filter_type"],
@@ -332,32 +354,52 @@ def main(file_path, selected_models, filter_params):
                                         notch_freq=filter_params["notch_freq"],
                                         show_plots=filter_params["show_plots"],
                                         output_dir=output_dir)
-    # Veri setine 'class' sütununu ekleyelim.
     filtered_data['class'] = data['class']
+    print("Filtreleme sonrası sınıf dağılımı:")
+    print(filtered_data['class'].value_counts())
 
-    # Özellik çıkarma
+    # 5. Özellik Çıkarma
     print("Özellikler çıkarılıyor...")
-    features, labels = DatasetFeatureExtractor.extract_features(filtered_data, channels, window_size=200)
-
+    features, labels = DatasetFeatureExtractor.extract_features(filtered_data, channels, window_size=2)
     if np.isnan(features).any():
         print("Error: Features contain NaN values.")
     if np.isinf(features).any():
         print("Error: Features contain infinite values.")
-    # Veri dengeleme
-    print("Veri SMOTE ile dengeleniyor...")
-    balancer = DatasetBalancer()
-    features, labels = balancer.balance(features, labels)
-
-    # Veri ölçekleme
-    print("Veri ölçekleniyor...")
+    
+    print("Özellik çıkarma sonrası sınıf dağılımı:")
+    unique_labels, counts = np.unique(labels, return_counts=True)
+    for label, count in zip(unique_labels, counts):
+        print(f"Sınıf {label}: {count} örnek")
+    
+    # 6. Veri Ölçekleme ve Train/Validation/Test Split
+    print("Veri ölçekleniyor ve eğitim/test ayrımı yapılıyor...")
     scaler = DatasetScaler()
-    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, stratify=labels, random_state=42)
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
+    X_train, X_temp, y_train, y_temp = train_test_split(features, labels, test_size=0.3, stratify=labels, random_state=42)
+    X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, stratify=y_temp, random_state=42)
 
-    # Tüm Modelleri Eğitim Döngüsü
+    X_train = scaler.fit_transform(X_train)
+    X_val = scaler.transform(X_val)
+    X_test = scaler.transform(X_test)
+    
+    print("Veri ölçekleme sonrası sınıf dağılımları:")
+    unique_train_labels, train_counts = np.unique(y_train, return_counts=True)
+    print("Eğitim seti dağılımı:")
+    for label, count in zip(unique_train_labels, train_counts):
+         print(f"Sınıf {label}: {count} örnek")
+    
+    unique_val_labels, val_counts = np.unique(y_val, return_counts=True)
+    print("Validation seti dağılımı:")
+    for label, count in zip(unique_val_labels, val_counts):
+         print(f"Sınıf {label}: {count} örnek")
+    
+    unique_test_labels, test_counts = np.unique(y_test, return_counts=True)
+    print("Test seti dağılımı:")
+    for label, count in zip(unique_test_labels, test_counts):
+          print(f"Sınıf {label}: {count} örnek")
+
+    # Model Eğitimi ve Değerlendirmesi
     for model_type, model_params in selected_models:
-        run_model(model_type, model_params, X_train, y_train, X_test, y_test, output_dir=output_dir, filter_params=filter_params)
+        run_model(model_type, model_params, X_train, y_train, X_val, y_val, X_test, y_test, output_dir=output_dir, filter_params=filter_params)
 
     # Sonuçların kaydedilmesi
     print(f"Model eğitimi ve değerlendirme başarıyla tamamlandı. Sonuçlar '{output_dir}' klasörüne kaydedildi.")

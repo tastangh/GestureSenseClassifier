@@ -1,4 +1,3 @@
-# dataset_cleaner.py
 import pandas as pd
 
 class DatasetCleaner:
@@ -15,3 +14,14 @@ class DatasetCleaner:
         """
         print(f"Gereksiz sütunlar kaldırılıyor: {columns}")
         return data.drop(columns=columns, errors="ignore")
+    
+    @staticmethod
+    def drop_classes(data, classes):
+         """
+        Belirtilen sınıfları veri setinden kaldırır.
+        :param data: pandas DataFrame
+        :param classes: Kaldırılacak sınıfların listesi
+        :return: pandas DataFrame
+         """
+         print(f"Belirtilen sınıflar kaldırılıyor: {classes}")
+         return data[~data['class'].isin(classes)]
