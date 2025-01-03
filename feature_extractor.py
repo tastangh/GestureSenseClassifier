@@ -109,7 +109,8 @@ class FeatureExtractor:
         plt.xticks(rotation=45)
         plt.grid(axis='y')
 
-        plot_path = os.path.join(output_dir, "feature_weights.png")
+        feature_names_str = "_".join(shortened_labels)
+        plot_path = os.path.join(output_dir, f"feature_weights_{feature_names_str}.png")
         plt.savefig(plot_path, dpi=300)
         plt.close()
         print(f"Özellik ağırlık grafiği kaydedildi: {plot_path}")
