@@ -192,11 +192,11 @@ if __name__ == "__main__":
 
       # Data pipeline configuration
     data_pipeline_config = {
-        "clean_data": False,
-        "filter_data": False,
-        "extract_features": False,
-        "balance_data": False,
-        "scale_data": False
+        "clean_data": True,
+        "filter_data": True,
+        "extract_features": True,
+        "balance_data": True,
+        "scale_data": True
     }
 
     # Model parametreleri ve hangi modelin çalıştırılacağını belirleme
