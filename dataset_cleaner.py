@@ -15,17 +15,18 @@ class DatasetCleaner:
         print(f"Gereksiz sütunlar kaldırılıyor: {columns}")
         return data.drop(columns=columns, errors="ignore")
 
+
     @staticmethod
-    def drop_rows_by_class(data, class_column, class_value):
+    def drop_unmarked_class(data, class_column, unmarked_value=0):
         """
-        Belirtilen sınıfa (class) sahip satırları veri setinden kaldırır.
+        Belirtilen "unmarked" sınıfa sahip satırları veri setinden kaldırır.
         :param data: pandas DataFrame
         :param class_column: Sınıf sütununun adı
-        :param class_value: Kaldırılacak sınıf değeri
+        :param unmarked_value: Kaldırılacak "unmarked" sınıf değeri
         :return: pandas DataFrame
         """
-        print(f"{class_column} == {class_value} olan satırlar kaldırılıyor...")
-        return data[data[class_column] != class_value].reset_index(drop=True)
+        print(f"{class_column} sütununda {unmarked_value} değerine sahip satırlar kaldırılıyor...")
+        return data[data[class_column] != unmarked_value].reset_index(drop=True)
 
     @staticmethod
     def drop_na(data):

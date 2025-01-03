@@ -191,18 +191,24 @@ def main(file_path, model_params_dict):
     print("Veri temizleme işlemi yapılıyor...")
     cleaner = DatasetCleaner()
     data = cleaner.drop_columns(data, columns=["label"])
+    data = cleaner.drop_unmarked_class(data, class_column="class", unmarked_value=0)
+    print(f"Sınıf dağılımı (Temizleme sonrası):\n{data['class'].value_counts()}")
 
     print("Tüm kanallar için band geçiren filtre uygulanıyor...")
     filter_processor = DatasetFilter(data, channels, sampling_rate=1000)
     filter_processor.filter_all_channels(filter_type="band", cutoff=(0.1, 499), order=4)
     filtered_data = filter_processor.get_filtered_data()
+    print(f"Sınıf dağılımı (Filtreleme sonrası):\n{filtered_data['class'].value_counts()}")
 
     print("Özellikler çıkarılıyor...")
     features, labels = DatasetFeatureExtractor.extract_features(filtered_data, channels)
+    print(f"Sınıf dağılımı (Özellik çıkarma sonrası):\n{pd.Series(labels).value_counts()}")
 
     print("Veri SMOTE ile dengeleniyor...")
     balancer = DatasetBalancer()
     features, labels = balancer.balance(features, labels)
+    print(f"Sınıf dağılımı (Dengeleme sonrası):\n{pd.Series(labels).value_counts()}")
+
 
     print("Veri ölçekleniyor ve bölünüyor...")
     scaler = DatasetScaler()
@@ -224,9 +230,9 @@ if __name__ == "__main__":
         ModelType.LOGISTIC_REGRESSION: {"max_iter": 250},
         ModelType.DECISION_TREE: {"max_depth": 30},
         ModelType.RANDOM_FOREST: {"n_estimators": 150, "max_depth": 20, "random_state": 42},
-        ModelType.LSTM: {"time_steps": 8, "lstm_units": 64, "epochs": 10, "batch_size": 90},
-        ModelType.SVM: {"kernel": "linear", "C": 1.0, "random_state": 42},
-        ModelType.ANN: {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64}
+        # ModelType.LSTM: {"time_steps": 8, "lstm_units": 64, "epochs": 10, "batch_size": 90},
+        # ModelType.SVM: {"kernel": "linear", "C": 1.0, "random_state": 42},
+        # ModelType.ANN: {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64}
     }
     
     main(dataset_path, model_params_dict=model_params_dict)
