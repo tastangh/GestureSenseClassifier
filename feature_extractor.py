@@ -31,7 +31,7 @@ class FeatureExtractor:
             "rms": "RMS",
             "waveform_length": "WL",
             "mean_absolute_value": "MAV",
-            "variance": "VAR",
+             "variance": "VAR",
             "slope_sign_changes": "SSC",
             "willison_amplitude": "WAMP",
             "myopulse_percentage_rate": "MPR",
@@ -41,33 +41,37 @@ class FeatureExtractor:
             "maximum_fractal_length": "MFL",
         }
 
-        # Tüm özellikler
+         # Tüm özellikler
         self.available_features = {
-            "mean": lambda window: window.mean(axis=0),
-            "std": lambda window: window.std(axis=0),
-            "min": lambda window: window.min(axis=0),
-            "max": lambda window: window.max(axis=0),
+            "mean": lambda window: np.mean(window, axis=0),
+            "std": lambda window: np.std(window, axis=0),
+            "min": lambda window: np.min(window, axis=0),
+            "max": lambda window: np.max(window, axis=0),
             "energy": lambda window: np.sum(np.square(window), axis=0),
             "zero_crossing_rate": lambda window: np.sum(np.diff(np.sign(window), axis=0) != 0, axis=0),
-            "dominant_frequency": lambda window: np.argmax(np.abs(np.fft.fft(window, axis=0)), axis=0),
-            "rms": lambda window: np.sqrt(np.mean(np.square(window), axis=0)),
+            "dominant_frequency": lambda window: np.argmax(np.abs(np.fft.fft(window, axis=0)), axis=0)[0] if window.size > 0 else 0,
+             "rms": lambda window: np.sqrt(np.mean(np.square(window), axis=0)),
             "waveform_length": lambda window: np.sum(np.abs(np.diff(window, axis=0)), axis=0),
             "mean_absolute_value": lambda window: np.mean(np.abs(window), axis=0),
             "variance": lambda window: np.var(window, axis=0),
-            "slope_sign_changes": lambda window: np.sum(np.diff(np.sign(np.diff(window, axis=0)), axis=0) != 0, axis=0),
-            "willison_amplitude": lambda window: np.sum(np.abs(np.diff(window, axis=0)) > 0.01, axis=0),
+           "slope_sign_changes": lambda window: np.mean(np.sum(np.diff(np.sign(np.diff(window, axis=0)), axis=0) != 0, axis=0)) if window.size > 0 else 0,
+             "willison_amplitude": lambda window: np.mean(np.sum(np.abs(np.diff(window, axis=0)) > 0.01, axis=0)) if window.size > 0 else 0,
             "myopulse_percentage_rate": lambda window: np.sum(np.abs(window) > 0.01, axis=0) / window.shape[0],
             "simple_square_integral": lambda window: np.sum(window**2, axis=0),
             "log_detector": lambda window: np.exp(np.mean(np.log(np.abs(window) + 1e-10), axis=0)),
             "difference_absolute_standard_deviation_value": lambda window: np.mean(np.abs(np.diff(window, axis=0)), axis=0),
-            "maximum_fractal_length": lambda window: np.sum(np.abs(np.diff(window, axis=0))**1.5, axis=0),
-        }
+             "maximum_fractal_length": lambda window: np.sum(np.abs(np.diff(window, axis=0))**1.5, axis=0),
+         }
 
-    def extract_features(self):
+    def extract_features(self, data=None):
         """
         Seçilen özellikleri çıkarır ve bir pandas DataFrame olarak döner.
+        :param data: Veri seti (pandas DataFrame)
         :return: Çıkarılan özellikler (pandas DataFrame)
         """
+        if data is not None:
+            self.data = data
+
         step_size = int(self.window_size * (1 - self.overlap))
         windows = [
             self.data.iloc[start:start + self.window_size].values
@@ -123,20 +127,34 @@ if __name__ == "__main__":
     # Kanal isimleri
     channels = [f"channel{i}" for i in range(1, 9)]
 
-    # Özellik çıkarma sınıfını başlat
-    selected_features = None  # Tüm özellikleri seçmek için
+   # Özellik çıkarma sınıfını başlat
+    selected_features = [
+        "mean_absolute_value", "rms", "waveform_length",
+        "slope_sign_changes", "willison_amplitude", "dominant_frequency",
+         "maximum_fractal_length", "log_detector"
+    ]
+
+    # Literatür tabanlı ağırlıklandırma
+    feature_weights = {
+        "mean_absolute_value": 1.5,
+        "rms": 1.5,
+        "waveform_length": 1.3,
+        "slope_sign_changes": 1.2,
+        "willison_amplitude": 1.2,
+        "dominant_frequency": 1.0,
+        "maximum_fractal_length": 0.8,
+        "log_detector": 0.7
+    }
+
 
     # FeatureExtractor örneği oluştur
     extractor = FeatureExtractor(
         data[channels],
         window_size=200,
         overlap=0.5,
-        selected_features=selected_features
+        selected_features=selected_features,
+        feature_weights=feature_weights
     )
-
-    # Özellik ağırlıkları belirle
-    feature_weights = {name: np.random.uniform(0.5, 1.5) for name in extractor.available_features.keys()}
-    extractor.feature_weights = feature_weights
 
     # Özellikleri çıkar
     print("Özellikler çıkarılıyor...")
