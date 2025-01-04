@@ -209,40 +209,38 @@ def main(file_path, model_params_dict):
         print("Veri yükleniyor...")
         data = pd.read_csv(file_path)
         channels = [f"channel{i}" for i in range(1, 9)]
-        visualizer.plot_class_distribution(data, class_column="class", title="Ham veri", filename="class_distribution.png")
+        # visualizer.plot_class_distribution(data, class_column="class", title="Ham veri", filename="class_distribution.png")
 
         # 1. Veri temizleme işlemi
         print("Veri temizleme işlemi yapılıyor...")
         cleaner = DatasetCleaner()
         data = cleaner.drop_columns(data, columns=["label"])  # Gereksiz kolonları temizle
         data = cleaner.drop_unmarked_class(data, class_column="class", unmarked_value=0)  # Class 0'ı temizle
-        visualizer.plot_class_distribution(data, class_column="class", title="Temizleme Sonrası Sınıf Dağılımı", filename="class_distribution_cleaned.png")
+        # visualizer.plot_class_distribution(data, class_column="class", title="Temizleme Sonrası Sınıf Dağılımı", filename="class_distribution_cleaned.png")
 
         # 2. SMOTE ile dengeleme
         print("Veri SMOTE ile dengeleniyor...")
         balancer = DatasetBalancer()
         balanced_data = balancer.balance(data, class_column="class")
-        visualizer.plot_class_distribution(balanced_data, class_column="class", title="Dengeleme Sonrası Sınıf Dağılımı", filename="class_distribution_balanced.png")
+        # visualizer.plot_class_distribution(balanced_data, class_column="class", title="Dengeleme Sonrası Sınıf Dağılımı", filename="class_distribution_balanced.png")
 
         # 3. Filtreleme işlemi
         print("Tüm kanallar için band geçiren filtre uygulanıyor...")
         filter_processor = DatasetFilter(balanced_data, channels, sampling_rate=1000)
         filter_processor.filter_all_channels(filter_type="band", cutoff=(0.1, 499), order=4)
         filtered_data = filter_processor.get_filtered_data()
-        visualizer.plot_filtered_signals(
-            original_data=balanced_data,
-            filtered_data=filtered_data,
-            channels=channels,
-            sampling_rate=1000,
-            output_prefix="filtered_signals",
-            start=0,
-            end=1000
-        )
+        # visualizer.plot_filtered_signals(
+        #     original_data=balanced_data,
+        #     filtered_data=filtered_data,
+        #     channels=channels,
+        #     sampling_rate=1000,
+        #     output_prefix="filtered_signals",
+        #     start=0,
+        #     end=1000
+        # )
         # 4. Özellik çıkarımı
         print("Özellikler çıkarılıyor...")
         features, labels = DatasetFeatureExtractor.extract_features(filtered_data, channels)
-        if 'time' in filtered_data.columns:
-            features['time'] = filtered_data['time']
         # 5. Veri ölçeklendirme ve bölme
         print("Veri ölçekleniyor ve bölünüyor...")
         scaler = DatasetScaler()
