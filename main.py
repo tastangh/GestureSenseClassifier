@@ -21,7 +21,7 @@ from log_reg_trainer import LogRegTrainer
 from randomforest_trainer import RandomForestTrainer
 from svm_trainer import SVMTrainer
 from ann_trainer import ANNTrainer
-
+from visualizer import Visualizer
 # Save function
 from save_results import save_results_to_excel
 import tensorflow as tf
@@ -199,50 +199,66 @@ def run_model(model_type, model_params, X_train, y_train, X_val, y_val, X_test, 
         print("Geçersiz model türü seçildi!")
 
 def main(file_path, model_params_dict):
-    output_dir = "./output"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-        print(f"'{output_dir}' klasörü oluşturuldu.")
+        output_dir = "./output"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            print(f"'{output_dir}' klasörü oluşturuldu.")
 
-    print("Veri yükleniyor...")
-    data = pd.read_csv(file_path)
-    channels = [f"channel{i}" for i in range(1, 9)]
+        visualizer = Visualizer(output_dir="./visualizations")
 
-    print("Veri temizleme işlemi yapılıyor...")
-    cleaner = DatasetCleaner()
-    data = cleaner.drop_columns(data, columns=["label"])
-    data = cleaner.drop_unmarked_class(data, class_column="class", unmarked_value=0)
-    print(f"Sınıf dağılımı (Temizleme sonrası):\n{data['class'].value_counts()}")
+        print("Veri yükleniyor...")
+        data = pd.read_csv(file_path)
+        channels = [f"channel{i}" for i in range(1, 9)]
+        visualizer.plot_class_distribution(data, class_column="class", title="Ham veri", filename="class_distribution.png")
 
-    print("Tüm kanallar için band geçiren filtre uygulanıyor...")
-    filter_processor = DatasetFilter(data, channels, sampling_rate=1000)
-    filter_processor.filter_all_channels(filter_type="band", cutoff=(0.1, 499), order=4)
-    filtered_data = filter_processor.get_filtered_data()
-    print(f"Sınıf dağılımı (Filtreleme sonrası):\n{filtered_data['class'].value_counts()}")
+        # 1. Veri temizleme işlemi
+        print("Veri temizleme işlemi yapılıyor...")
+        cleaner = DatasetCleaner()
+        data = cleaner.drop_columns(data, columns=["label"])  # Gereksiz kolonları temizle
+        data = cleaner.drop_unmarked_class(data, class_column="class", unmarked_value=0)  # Class 0'ı temizle
+        visualizer.plot_class_distribution(data, class_column="class", title="Temizleme Sonrası Sınıf Dağılımı", filename="class_distribution_cleaned.png")
 
-    print("Özellikler çıkarılıyor...")
-    features, labels = DatasetFeatureExtractor.extract_features(filtered_data, channels)
-    print(f"Sınıf dağılımı (Özellik çıkarma sonrası):\n{pd.Series(labels).value_counts()}")
+        # 2. SMOTE ile dengeleme
+        print("Veri SMOTE ile dengeleniyor...")
+        balancer = DatasetBalancer()
+        balanced_data = balancer.balance(data, class_column="class")
+        visualizer.plot_class_distribution(balanced_data, class_column="class", title="Dengeleme Sonrası Sınıf Dağılımı", filename="class_distribution_balanced.png")
 
-    print("Veri SMOTE ile dengeleniyor...")
-    balancer = DatasetBalancer()
-    features, labels = balancer.balance(features, labels)
-    print(f"Sınıf dağılımı (Dengeleme sonrası):\n{pd.Series(labels).value_counts()}")
+        # 3. Filtreleme işlemi
+        print("Tüm kanallar için band geçiren filtre uygulanıyor...")
+        filter_processor = DatasetFilter(balanced_data, channels, sampling_rate=1000)
+        filter_processor.filter_all_channels(filter_type="band", cutoff=(0.1, 499), order=4)
+        filtered_data = filter_processor.get_filtered_data()
+        visualizer.plot_filtered_signals(
+            original_data=balanced_data,
+            filtered_data=filtered_data,
+            channels=channels,
+            sampling_rate=1000,
+            output_prefix="filtered_signals",
+            start=0,
+            end=1000
+        )
+        # 4. Özellik çıkarımı
+        print("Özellikler çıkarılıyor...")
+        features, labels = DatasetFeatureExtractor.extract_features(filtered_data, channels)
 
+        # 5. Veri ölçeklendirme ve bölme
+        print("Veri ölçekleniyor ve bölünüyor...")
+        scaler = DatasetScaler()
+        X_train_full, X_test, y_train_full, y_test = train_test_split(features, labels, test_size=0.2, stratify=labels, random_state=42)
+        X_train, X_val, y_train, y_val = train_test_split(X_train_full, y_train_full, test_size=0.25, stratify=y_train_full, random_state=42)
 
-    print("Veri ölçekleniyor ve bölünüyor...")
-    scaler = DatasetScaler()
-    X_train_full, X_test, y_train_full, y_test = train_test_split(features, labels, test_size=0.2, stratify=labels, random_state=42)
-    X_train, X_val, y_train, y_val = train_test_split(X_train_full, y_train_full, test_size=0.25, stratify=y_train_full, random_state=42)
-    X_train = scaler.fit_transform(X_train)
-    X_val = scaler.transform(X_val)
-    X_test = scaler.transform(X_test)
+        X_train = scaler.fit_transform(X_train)
+        X_val = scaler.transform(X_val)
+        X_test = scaler.transform(X_test)
 
-    for model_type, model_params in model_params_dict.items():
-        print(f"\n{model_type.value} modeli çalıştırılıyor...")
-        run_model(model_type, model_params, X_train, y_train, X_val, y_val, X_test, y_test, output_dir=output_dir)
+        # Modelleri çalıştırma
+        for model_type, model_params in model_params_dict.items():
+            print(f"\n{model_type.value} modeli çalıştırılıyor...")
+            run_model(model_type, model_params, X_train, y_train, X_val, y_val, X_test, y_test, output_dir=output_dir)
 
-    print(f"Tüm modellerin eğitimi ve değerlendirmesi başarıyla tamamlandı. Sonuçlar '{output_dir}' klasörüne kaydedildi.")
+        print(f"Tüm modellerin eğitimi ve değerlendirmesi başarıyla tamamlandı. Sonuçlar '{output_dir}' klasörüne kaydedildi.")
+
 
 if __name__ == "__main__":
     dataset_path = "dataset/EMG-data.csv"
