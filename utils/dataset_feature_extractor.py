@@ -1,4 +1,5 @@
 # dataset_feature_extractor.py
+# dataset_feature_extractor.py
 import numpy as np
 
 class DatasetFeatureExtractor:
@@ -10,10 +11,10 @@ class DatasetFeatureExtractor:
             subset = data[data["class"] == gesture]
             for i in range(0, len(subset) - window_size, window_size):
                 window = subset.iloc[i : i + window_size][channels].values
-                features.append(DatasetFeatureExtractor.advanced_feature_extraction(window))
+                features.append(window)
                 labels.append(gesture)
         return np.array(features), np.array(labels)
-
+        
     @staticmethod
     def advanced_feature_extraction(window):
         # Zaman ve frekans özellikleri
