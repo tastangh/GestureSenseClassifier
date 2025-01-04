@@ -75,32 +75,35 @@ def run_model(model_type, model_params, X_train, y_train, X_val, y_val, X_test, 
 
     elif model_type == ModelType.LSTM:
         print("LSTM modeli için veri hazırlanıyor...")
-        
+
         time_steps = model_params["time_steps"]
         total_features = X_train.shape[1]
 
+        # time_steps ile uyumlu num_features hesaplanıyor
         if total_features % time_steps != 0:
-            raise ValueError(f"Özellik sayısı ({total_features}) time_steps ({time_steps}) ile uyumlu değil. time_steps değerini değiştirin.")
-        
+            raise ValueError(
+                f"Özellik sayısı ({total_features}) time_steps ({time_steps}) ile uyumlu değil. time_steps değerini değiştirin.")
+
         num_features = total_features // time_steps
-        
+
+        # X_train ve X_test yeniden şekillendiriliyor
         X_train_lstm = X_train.reshape(-1, time_steps, num_features)
         X_val_lstm = X_val.reshape(-1, time_steps, num_features)
         X_test_lstm = X_test.reshape(-1, time_steps, num_features)
 
         print("LSTM modeli eğitiliyor...")
-        lstm_trainer = LSTMTrainer(
-            input_shape=(model_params["time_steps"], X_train.shape[1] // model_params["time_steps"]),
-            lstm_units=model_params.get("lstm_units", 64),
-            dropout_rate=model_params.get("dropout_rate", 0.2),
-            learning_rate=model_params.get("learning_rate", 0.001),
-            num_classes=len(np.unique(y_train))  # Sınıf sayısını ayarla
-        )
+        num_classes = len(np.unique(y_train))
+        lstm_trainer = LSTMTrainer(input_shape=(time_steps, num_features), num_classes=num_classes, lstm_units=model_params.get("lstm_units", 64), output_dir=output_dir)
         lstm_trainer.train(
-            X_train_lstm, y_train,
-            X_val=X_val_lstm, y_val=y_val,
+            X_train_lstm, y_train, X_val=X_val_lstm, y_val=y_val,
             epochs=model_params.get("epochs", 10),
-            batch_size=model_params.get("batch_size", 32)
+            batch_size=model_params.get("batch_size", 32),
+            learning_rate=model_params.get("learning_rate", 0.001),
+            early_stopping=model_params.get("early_stopping", False),
+            patience=model_params.get("patience", 3),
+            learning_rate_scheduling=model_params.get("learning_rate_scheduling", False),
+            factor=model_params.get("factor", 0.1),
+            min_lr=model_params.get("min_lr", 1e-6)
         )
 
         print("LSTM modeli değerlendiriliyor...")
@@ -108,16 +111,22 @@ def run_model(model_type, model_params, X_train, y_train, X_val, y_val, X_test, 
         accuracy_lstm = accuracy_score(y_test, y_pred_lstm)
         print(f"LSTM Test Doğruluğu: {accuracy_lstm * 100:.2f}%")
 
-        save_results_to_excel(
-            output_dir,
-            "LSTM",
-            model_params,
-            lstm_trainer.history.history['loss'][-1],
-            lstm_trainer.history.history['accuracy'][-1],
-            lstm_trainer.history.history['val_loss'][-1],
-            lstm_trainer.history.history['val_accuracy'][-1]
-        )
-        lstm_trainer.plot_metrics()
+        # save_results_to_excel(
+        #     output_dir,
+        #     "LSTM",
+        #     model_params,
+        #      lstm_trainer.history['loss'][-1],
+        #     lstm_trainer.history['accuracy'][-1],
+        #     lstm_trainer.history['val_loss'][-1] if 'val_loss' in lstm_trainer.history else None,
+        #     lstm_trainer.history['val_accuracy'][-1] if 'val_accuracy' in lstm_trainer.history else None,
+        #       accuracy_lstm, # Test Accuracy ekledik
+        #      filter_params, # Filtre parametreleri ekledik
+        #      feature_params, # Öznitelik çıkarma parametrelerini ekledik.
+        #       scaler_type, # Ölçeklendirme türü
+        #      balancer_type # Dengeleme türünü ekledik.
+        # )
+        lstm_trainer.plot_metrics("LSTM", model_params)
+
         
     elif model_type == ModelType.RANDOM_FOREST:
         print("Random Forest modeli eğitiliyor...")
@@ -168,35 +177,54 @@ def run_model(model_type, model_params, X_train, y_train, X_val, y_val, X_test, 
         )
         
     elif model_type == ModelType.ANN:
-        print("Yapay Sinir Ağları (ANN) modeli eğitiliyor...")
-        ann_trainer = ANNTrainer(
-            input_dim=X_train.shape[1],
-            hidden_layers=model_params.get("hidden_layers", [64, 32]),
-            dropout_rate=model_params.get("dropout_rate", 0.2),
-            learning_rate=model_params.get("learning_rate", 0.001),
-            num_classes=len(np.unique(y_train))  # Sınıf sayısını ayarla
-        )
-        ann_trainer.train(X_train, y_train, X_val=X_val, y_val=y_val,
-                        epochs=model_params.get("epochs", 10),
-                        batch_size=model_params.get("batch_size", 32))
+            print("Yapay Sinir Ağları (ANN) modeli eğitiliyor...")
+            num_classes = len(np.unique(y_train))
+            ann_trainer = ANNTrainer(
+                input_dim=X_train.shape[1],
+                num_classes=num_classes,
+                hidden_layers=model_params.get("hidden_layers", [64, 32]),
+                dropout_rate=model_params.get("dropout_rate", 0.2),
+                learning_rate=model_params.get("learning_rate", 0.001),
+                output_dir=output_dir
+            )
+            ann_trainer.train(
+                X_train, y_train,
+                X_val=X_val, y_val=y_val,
+                epochs=model_params.get("epochs", 10),
+                batch_size=model_params.get("batch_size", 32),
+                early_stopping=model_params.get("early_stopping", False),
+                patience=model_params.get("patience", 3),
+                learning_rate_scheduling=model_params.get("learning_rate_scheduling", False),
+                factor=model_params.get("factor", 0.1),
+                min_lr=model_params.get("min_lr", 1e-6)
+            )
 
-        print("ANN modeli değerlendiriliyor...")
-        y_pred_ann = ann_trainer.predict(X_test)
-        accuracy_ann = accuracy_score(y_test, y_pred_ann)
-        print(f"ANN Test Doğruluğu: {accuracy_ann * 100:.2f}%")
+            print("ANN modeli değerlendiriliyor...")
+            y_pred_ann = ann_trainer.predict(X_test)
+            accuracy_ann = accuracy_score(y_test, y_pred_ann)
+            print(f"ANN Test Doğruluğu: {accuracy_ann * 100:.2f}%")
 
-        save_results_to_excel(
-            output_dir,
-            "ANN",
-            model_params,
-            train_loss=ann_trainer.history.history['loss'][-1],
-            train_accuracy=ann_trainer.history.history['accuracy'][-1],
-            val_loss=ann_trainer.history.history['val_loss'][-1] if 'val_loss' in ann_trainer.history.history else None,
-            val_accuracy=ann_trainer.history.history['val_accuracy'][-1] if 'val_accuracy' in ann_trainer.history.history else None
-        )
+            # Sonuçları kaydet
+            # save_results_to_excel(
+            #     output_dir,
+            #     "ANN",
+            #     model_params,
+            #      ann_trainer.history['loss'][-1],
+            #     ann_trainer.history['accuracy'][-1],
+            #     ann_trainer.history['val_loss'][-1] if 'val_loss' in ann_trainer.history else None,
+            #     ann_trainer.history['val_accuracy'][-1] if 'val_accuracy' in ann_trainer.history else None,
+            #      accuracy_ann, # Test Accuracy ekledik
+            #      filter_params, # Filtre parametreleri ekledik
+            #       feature_params, # Öznitelik çıkarma parametrelerini ekledik.
+            #       scaler_type, # Ölçeklendirme türü
+            #      balancer_type # Dengeleme türünü ekledik.
+            # )
+            ann_trainer.plot_metrics("ANN", model_params)
+
 
     else:
-        print("Geçersiz model türü seçildi!")
+            print("Geçersiz model türü seçildi!")
+
 
 def main(file_path, model_params_dict):
         output_dir = "./output"
@@ -262,11 +290,11 @@ def main(file_path, model_params_dict):
 if __name__ == "__main__":
     dataset_path = "dataset/EMG-data.csv"
     model_params_dict = {
-        ModelType.LOGISTIC_REGRESSION: {"max_iter": 250},
-        ModelType.DECISION_TREE: {"max_depth": 30},
-        ModelType.RANDOM_FOREST: {"n_estimators": 150, "max_depth": 20, "random_state": 42},
+        # ModelType.LOGISTIC_REGRESSION: {"max_iter": 250},
+        # ModelType.DECISION_TREE: {"max_depth": 30},
+        # ModelType.RANDOM_FOREST: {"n_estimators": 150, "max_depth": 20, "random_state": 42},
         ModelType.LSTM: {"time_steps": 8, "lstm_units": 64, "epochs": 10, "batch_size": 90},
-        ModelType.SVM: {"kernel": "linear", "C": 1.0, "random_state": 42},
+        # ModelType.SVM: {"kernel": "linear", "C": 1.0, "random_state": 42},
         ModelType.ANN: {"hidden_layers": [32], "dropout_rate": 0.3, "learning_rate": 0.01, "epochs": 20, "batch_size": 64}
     }
     
