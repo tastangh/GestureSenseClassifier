@@ -1,0 +1,7 @@
+
+Senaryo: orijinal başlatıldı.
+Özellik çıkarımı atlandı.
+Veri eğitim, doğrulama ve test setlerine ayrıldı.
+Normalizasyon atlandı.
+Logistik Regresyon modeli eğitildi.
+Karışıklık matrisleri kaydedildi.
