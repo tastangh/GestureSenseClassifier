@@ -1,5 +1,0 @@
-
-Senaryo: temizlenmis başlatıldı.
-Özellik çıkarımı atlandı.
-Veri eğitim, doğrulama ve test setlerine ayrıldı.
-Normalizasyon atlandı.

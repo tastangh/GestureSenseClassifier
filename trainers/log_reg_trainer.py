@@ -20,15 +20,21 @@ class LogRegTrainer:
         self.cutoff = cutoff
         self.sampling_rate = sampling_rate
 
-        # Ana klasör ayarı
-        self.base_dir = base_dir
-        os.makedirs(self.base_dir, exist_ok=True)
+        # Parametrelere dayalı alt klasör oluşturma
+        param_dir = f"log_reg_ws{window_size}_cutoff{cutoff[0]}-{cutoff[1]}_sr{sampling_rate}"
+        self.save_dir = os.path.join(base_dir, param_dir)
+        os.makedirs(self.save_dir, exist_ok=True)
 
-    def log(self, log_dir, message):
-        """Hem terminale yaz hem de log dosyasına kaydet."""
+        # Log dosyasını ayarla
+        self.log_file = os.path.join(self.save_dir, "log.txt")
+        with open(self.log_file, "w") as f:
+            f.write("Model Eğitim Logları\n")
+            f.write("=" * 50 + "\n")
+
+    def log(self, message):
+        # Mesajı hem terminale yaz hem de log dosyasına kaydet
         print(message)
-        log_file = os.path.join(log_dir, "log.txt")
-        with open(log_file, "a") as f:
+        with open(self.log_file, "a") as f:
             f.write(message + "\n")
 
     @staticmethod
@@ -54,7 +60,7 @@ class LogRegTrainer:
         return filtfilt(b, a, signal)
 
     def filter_all_channels(self, data):
-        for channel in tqdm(self.channels, desc="Kanallara Filtre Uygulanıyor"):
+        for channel in self.channels:
             data[channel] = self.apply_filter(data[channel].values, "band", self.cutoff, order=4, sampling_rate=self.sampling_rate)
         return data
 
@@ -80,7 +86,7 @@ class LogRegTrainer:
         freq_spectrum = np.fft.fft(window, axis=0)
         power_spectral_density = np.abs(freq_spectrum) ** 2
         mean_frequency = np.array([
-            np.sum(np.arange(len(psd)) * psd) / np.sum(psd)
+            np.sum(np.arange(len(psd)) * psd) / np.sum(psd) 
             for psd in power_spectral_density.T
         ])
 
@@ -106,110 +112,99 @@ class LogRegTrainer:
                 labels.append(gesture)
         return np.array(features), np.array(labels)
 
-    def plot_confusion_matrix(self, log_dir, y_true, y_pred, classes, filename):
+    def plot_confusion_matrix(self, y_true, y_pred, classes, filename):
         cm = confusion_matrix(y_true, y_pred)
         fig, ax = plt.subplots(figsize=(10, 8))
         sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=classes, yticklabels=classes, ax=ax)
 
-        ax.set_title("Karışıklık Matrisi", fontsize=14)
-        ax.set_xlabel("Tahmin Edilen", fontsize=12)
-        ax.set_ylabel("Gerçek", fontsize=12)
+        title = "Karışıklık Matrisi"
+        feature_info = (
+            f"Pencere Boyutu: {self.window_size}, "
+            f"Kesim: {self.cutoff[0]}-{self.cutoff[1]} Hz, "
+            f"Örnekleme Hızı: {self.sampling_rate} Hz"
+        )
+        ax.set_title(f"{title}\n{feature_info}", fontsize=12, pad=20)
+        ax.set_xlabel("Tahmin Edilen", fontsize=10)
+        ax.set_ylabel("Gerçek", fontsize=10)
 
         plt.tight_layout()
-        plt.savefig(os.path.join(log_dir, filename))
+        plt.savefig(os.path.join(self.save_dir, filename))
         plt.close(fig)
 
-    def save_metrics(self, log_dir, set_name, y_true, y_pred):
-        """Başarı metriklerini CSV'ye kaydet."""
-        accuracy = accuracy_score(y_true, y_pred)
-        f1 = f1_score(y_true, y_pred, average="macro")
-        precision = precision_score(y_true, y_pred, average="macro")
-        recall = recall_score(y_true, y_pred, average="macro")
-        metrics_file = os.path.join(log_dir, "metrikler.csv")
+    def train_model(self):
+        data = pd.read_csv(self.file_path)
 
-        # Metrikleri dosyaya ekle
-        with open(metrics_file, "a") as f:
-            if os.stat(metrics_file).st_size == 0:
-                f.write("Set,Doğruluk,F1 Skoru,Kesinlik,Duyarlılık\n")
-            f.write(f"{set_name},{accuracy:.4f},{f1:.4f},{precision:.4f},{recall:.4f}\n")
+        self.log("\nVeri Yükleme Tamamlandı")
+        self.log(f"Toplam Veri Sayısı: {len(data)}")
 
-    def train_scenario(self, scenario_name, data, include_features=True, include_normalization=True):
-        scenario_dir = os.path.join(self.base_dir, scenario_name)
-        os.makedirs(scenario_dir, exist_ok=True)
-        self.log(scenario_dir, f"\nSenaryo: {scenario_name} başlatıldı.")
+        # Veri temizleme
+        data = self.drop_columns(data, ["time", "label"])
+        self.log("Sütunlar Silindi: ['time', 'label']")
+        data = self.drop_na(data)
+        self.log("Eksik Veriler Temizlendi")
+        data = self.drop_unmarked_class(data, "class", unmarked_value=0)
+        self.log("Sınıf 0 Temizlendi")
+
+        self.log(f"\nSınıf Dağılımı (Temizleme Sonrası):\n{data['class'].value_counts()}")
+
+        # Filtremleme
+        data = self.filter_all_channels(data)
+        self.log(f"Bant Geçiş Filtresi Uygulandı: {self.cutoff[0]}-{self.cutoff[1]} Hz")
+
+        # Dengeleme
+        data = self.balance_data_with_smote(data, class_column="class")
+        self.log(f"Sınıf Dağılımı (Dengeleme Sonrası):\n{data['class'].value_counts()}")
 
         # Özellik çıkarımı
-        if include_features:
-            features, labels = self.extract_features(data)
-            self.log(scenario_dir, "Özellik çıkarımı tamamlandı.")
-        else:
-            features = data.drop(columns=["class"]).values
-            labels = data["class"].values
-            self.log(scenario_dir, "Özellik çıkarımı atlandı.")
+        features, labels = self.extract_features(data)
+        self.log(f"\nÖzellik Çıkarımı Tamamlandı: {len(features)} örnek")
 
         # Eğitim, doğrulama ve test setlerine bölme
         X_train, X_temp, y_train, y_temp = train_test_split(features, labels, test_size=0.3, random_state=42, stratify=labels)
         X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp)
-        self.log(scenario_dir, "Veri eğitim, doğrulama ve test setlerine ayrıldı.")
+        self.log(f"Eğitim, Doğrulama ve Test Setleri Ayrıldı")
 
         # Normalizasyon
-        if include_normalization:
-            scaler = StandardScaler()
-            X_train = scaler.fit_transform(X_train)
-            X_val = scaler.transform(X_val)
-            X_test = scaler.transform(X_test)
-            self.log(scenario_dir, "Veri normalizasyonu tamamlandı.")
-        else:
-            self.log(scenario_dir, "Normalizasyon atlandı.")
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_val = scaler.transform(X_val)
+        X_test = scaler.transform(X_test)
+        self.log("Veri Normalizasyonu Tamamlandı")
 
         # Model eğitimi
         model = LogisticRegression(max_iter=1000, random_state=42, class_weight="balanced")
         model.fit(X_train, y_train)
-        self.log(scenario_dir, "Logistik Regresyon modeli eğitildi.")
+        self.log("Logistik Regresyon Modeli Eğitildi")
 
         # Performans değerlendirme
+        metrics = []
+
+        def evaluate_and_log(name, y_true, y_pred):
+            accuracy = accuracy_score(y_true, y_pred)
+            f1 = f1_score(y_true, y_pred, average="macro")
+            precision = precision_score(y_true, y_pred, average="macro")
+            recall = recall_score(y_true, y_pred, average="macro")
+            metrics.append([name, accuracy, f1, precision, recall])
+            self.log(f"\n{name} Metrikleri:\n"
+                     f"Doğruluk: {accuracy:.4f}, F1 Skoru: {f1:.4f}, Kesinlik: {precision:.4f}, Duyarlılık: {recall:.4f}")
+
+        # Doğrulama seti
         y_val_pred = model.predict(X_val)
+        evaluate_and_log("Doğrulama", y_val, y_val_pred)
+        self.plot_confusion_matrix(y_val, y_val_pred, classes=np.unique(labels), filename="dogrulama_karisiklik_matrisi.png")
+
+        # Test seti
         y_test_pred = model.predict(X_test)
+        evaluate_and_log("Test", y_test, y_test_pred)
+        self.plot_confusion_matrix(y_test, y_test_pred, classes=np.unique(labels), filename="test_karisiklik_matrisi.png")
 
-        # Karışıklık matrislerini kaydet
-        self.plot_confusion_matrix(scenario_dir, y_val, y_val_pred, np.unique(labels), "dogrulama_karisiklik_matrisi.png")
-        self.plot_confusion_matrix(scenario_dir, y_test, y_test_pred, np.unique(labels), "test_karisiklik_matrisi.png")
-        self.log(scenario_dir, "Karışıklık matrisleri kaydedildi.")
-
-        # Başarı metriklerini kaydet
-        self.save_metrics(scenario_dir, "Doğrulama", y_val, y_val_pred)
-        self.save_metrics(scenario_dir, "Test", y_test, y_test_pred)
-
-    def analyze_processing_steps(self):
-        data = pd.read_csv(self.file_path)
-
-        self.log(self.base_dir, f"Veri yüklendi. Toplam örnek sayısı: {len(data)}")
-        self.train_scenario("orijinal", data, include_features=False, include_normalization=False)
-
-        # Veri temizleme
-        data_cleaned = self.drop_na(data)
-        self.train_scenario("temizlenmis", data_cleaned, include_features=False, include_normalization=False)
-
-        # Sınıf 0'ı silme
-        data_no_class0 = self.drop_unmarked_class(data_cleaned, "class", unmarked_value=0)
-        self.train_scenario("sinif0_silindi", data_no_class0, include_features=False, include_normalization=False)
-
-        # Filtremleme
-        data_filtered = self.filter_all_channels(data_no_class0)
-        self.train_scenario("filtrelendi", data_filtered, include_features=False, include_normalization=False)
-
-        # Dengeleme
-        data_balanced = self.balance_data_with_smote(data_filtered, "class")
-        self.train_scenario("dengelendi", data_balanced, include_features=False, include_normalization=False)
-
-        # Özellik çıkarımı
-        features, labels = self.extract_features(data_balanced)
-        features_df = pd.DataFrame(features)
-        features_df["class"] = labels
-        self.train_scenario("ozellik_cikarildi", features_df, include_features=False, include_normalization=True)
+        # Metrikleri tablo olarak kaydet
+        metrics_df = pd.DataFrame(metrics, columns=["Set", "Doğruluk", "F1 Skoru", "Kesinlik", "Duyarlılık"])
+        metrics_df.to_csv(os.path.join(self.save_dir, "metrikler.csv"), index=False)
+        self.log("Tüm metrikler 'metrikler.csv' dosyasına kaydedildi.")
 
 
 if __name__ == "__main__":
     channels = [f"channel{i}" for i in range(1, 9)]
     trainer = LogRegTrainer(file_path="dataset/EMG-data.csv", channels=channels, window_size=100, cutoff=(20, 450), sampling_rate=1000)
-    trainer.analyze_processing_steps()
+    trainer.train_model()
