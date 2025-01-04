@@ -241,7 +241,8 @@ def main(file_path, model_params_dict):
         # 4. Özellik çıkarımı
         print("Özellikler çıkarılıyor...")
         features, labels = DatasetFeatureExtractor.extract_features(filtered_data, channels)
-
+        if 'time' in filtered_data.columns:
+            features['time'] = filtered_data['time']
         # 5. Veri ölçeklendirme ve bölme
         print("Veri ölçekleniyor ve bölünüyor...")
         scaler = DatasetScaler()
