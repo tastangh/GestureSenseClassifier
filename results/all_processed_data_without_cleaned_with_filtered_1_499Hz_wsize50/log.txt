@@ -281,3 +281,5 @@ Epoch 258/500: Eğitim Kaybı: 0.1868, Doğrulama Kaybı: 0.1868
 Epoch 259/500: Eğitim Kaybı: 0.1868, Doğrulama Kaybı: 0.1868
 Epoch 260/500: Eğitim Kaybı: 0.1867, Doğrulama Kaybı: 0.1867
 Epoch 261/500: Eğitim Kaybı: 0.1867, Doğrulama Kaybı: 0.1867
+Epoch 262/500: Eğitim Kaybı: 0.1867, Doğrulama Kaybı: 0.1867
+Epoch 263/500: Eğitim Kaybı: 0.1867, Doğrulama Kaybı: 0.1867
