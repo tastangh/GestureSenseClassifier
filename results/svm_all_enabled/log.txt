@@ -41,5 +41,5 @@ Doğruluk: 0.8889, F1 Skoru: 0.8887, Kesinlik: 0.8889, Duyarlılık: 0.8889
 Test Metrikleri:
 Doğruluk: 0.8909, F1 Skoru: 0.8904, Kesinlik: 0.8904, Duyarlılık: 0.8909
 Tüm metrikler 'metrikler.csv' dosyasına kaydedildi.
-Senaryo Süresi: 687.78 saniye
+Senaryo Süresi: 641.70 saniye
 Finished scenario: svm_all_enabled

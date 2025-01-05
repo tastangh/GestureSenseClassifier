@@ -1,0 +1,23 @@
+Model Eğitim Logları
+==================================================
+
+Veri Yükleme Tamamlandı
+Toplam Veri Sayısı: 4237907
+Veri Temizleme Atlandı
+Bant Geçiş Filtresi Uygulandı: 1-499 Hz
+Sınıf Dağılımı (Dengeleme Sonrası):
+class
+0    2725157
+1    2725157
+2    2725157
+3    2725157
+4    2725157
+5    2725157
+6    2725157
+7    2725157
+Name: count, dtype: int64
+
+Özellik Çıkarımı Tamamlandı: 218008 örnek
+Eğitim, Doğrulama ve Test Setleri Ayrıldı
+Veri Normalizasyonu Tamamlandı
+NaN değerleri impute edildi
