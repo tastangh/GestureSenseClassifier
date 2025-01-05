@@ -312,19 +312,19 @@ class DTCTrainer:
 
     def run_scenarios(self):
         scenarios = [
-            {"name": "original_data_with_default_params", "use_filter": False, "use_smote": False, "feature_types": ["all"], "data_cleaning": False, "normalization": True, "use_feature_extraction": False},
-            {"name": "compare_gini_entropy", "use_filter": True, "use_smote": False, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "model_params": {"criterion": "gini"}},
-            {"name": "compare_gini_entropy_with_entropy", "use_filter": True, "use_smote": False, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "model_params": {"criterion": "entropy"}},
-            {"name": "time_domain_features", "use_filter": True, "use_smote": False, "feature_types": ["mean_abs_value", "root_mean_square", "waveform_length", "variance", "integrated_emg"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True},
-            {"name": "frequency_domain_features", "use_filter": True, "use_smote": False, "feature_types": ["mean_frequency"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True},
-            {"name": "all_features_together", "use_filter": True, "use_smote": False, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True},
-            {"name": "full_dataset_training", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True},
-           {"name": "data_ratio_20", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "data_ratio": 0.2},
-           {"name": "data_ratio_40", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "data_ratio": 0.4},
-           {"name": "data_ratio_60", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "data_ratio": 0.6},
-           {"name": "data_ratio_80", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "data_ratio": 0.8},
-           {"name": "with_smote_data_balancing", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "balance_technique" : "smote"},
-            {"name": "with_randomoversampler_data_balancing", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "balance_technique" : "random"},
+        #     {"name": "original_data_with_default_params", "use_filter": False, "use_smote": False, "feature_types": ["all"], "data_cleaning": False, "normalization": True, "use_feature_extraction": False},
+        #     {"name": "compare_gini_entropy", "use_filter": True, "use_smote": False, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "model_params": {"criterion": "gini"}},
+        #     {"name": "compare_gini_entropy_with_entropy", "use_filter": True, "use_smote": False, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "model_params": {"criterion": "entropy"}},
+        #     {"name": "time_domain_features", "use_filter": True, "use_smote": False, "feature_types": ["mean_abs_value", "root_mean_square", "waveform_length", "variance", "integrated_emg"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True},
+        #     {"name": "frequency_domain_features", "use_filter": True, "use_smote": False, "feature_types": ["mean_frequency"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True},
+        #     {"name": "all_features_together", "use_filter": True, "use_smote": False, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True},
+            {"name": "full_dataset_training", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": False, "normalization": True, "use_feature_extraction": True},
+        #    {"name": "data_ratio_20", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "data_ratio": 0.2},
+        #    {"name": "data_ratio_40", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "data_ratio": 0.4},
+        #    {"name": "data_ratio_60", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "data_ratio": 0.6},
+        #    {"name": "data_ratio_80", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "data_ratio": 0.8},
+        #    {"name": "with_smote_data_balancing", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "balance_technique" : "smote"},
+        #     {"name": "with_randomoversampler_data_balancing", "use_filter": True, "use_smote": True, "feature_types": ["all"], "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "balance_technique" : "random"},
         ]
 
         with multiprocessing.Pool() as pool:
