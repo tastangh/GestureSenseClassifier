@@ -201,13 +201,13 @@ class DTCTrainer:
                 feature_names = ["mean_abs_value", "root_mean_square", "waveform_length", "variance", "integrated_emg", "mean_frequency"]
                 feature_names = [f"{feature}_channel{channel}" for feature in feature_names for channel in range(1, 9)]
             else:
-              feature_names =  [f"{feature_type}_channel{channel}" for feature_type in feature_types  for channel in range(1, 9)]
+                feature_names =  [f"{feature_type}_channel{channel}" for feature_type in feature_types  for channel in range(1, 9)]
         else:
             features = data[self.channels].values
             labels = data["class"].values
             self.log("Özellik Çıkarımı Atlandı", log_file)
             feature_names = self.channels
-
+        
         if data_ratio < 1 :
             X_train, X_temp, y_train, y_temp = train_test_split(features, labels, test_size=1 - data_ratio, random_state=42, stratify=labels)
             X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp)
@@ -234,10 +234,45 @@ class DTCTrainer:
             "min_samples_leaf": [1, 2, 4, 10],
             "criterion": ["gini", "entropy"]
         }
-        model = GridSearchCV(DecisionTreeClassifier(random_state=42), param_grid, cv=5, scoring="accuracy")
-        model.fit(X_train, y_train)
-        best_model = model.best_estimator_
-        self.log(f"En İyi Parametreler: {model.best_params_}", log_file)
+        
+        best_score = 0
+        best_params = {}
+        best_model = None
+        
+        patience = 3
+        best_val_score = 0
+        no_improve_count = 0
+        
+        for depth in param_grid["max_depth"]:
+            for min_split in param_grid["min_samples_split"]:
+              for min_leaf in param_grid["min_samples_leaf"]:
+                for criterion in param_grid["criterion"]:
+                    
+                    model = DecisionTreeClassifier(random_state=42, max_depth = depth, min_samples_split = min_split, min_samples_leaf = min_leaf, criterion = criterion )
+                    
+                    model.fit(X_train, y_train)
+                    y_pred = model.predict(X_val)
+                    score = accuracy_score(y_val, y_pred)
+                    
+                    if score > best_val_score:
+                        best_val_score = score
+                        best_params = {"max_depth": depth, "min_samples_split": min_split, "min_samples_leaf": min_leaf, "criterion": criterion}
+                        best_model = model
+                        no_improve_count = 0
+                        
+                        
+                    else:
+                       no_improve_count +=1
+                       
+                    if no_improve_count >= patience:
+                      self.log(f"Eğitim erken durduruldu, iterasyon {depth}_{min_split}_{min_leaf}_{criterion} de en iyi score elde edildi", log_file)
+                      break
+                if no_improve_count >= patience:
+                  break
+              if no_improve_count >= patience:
+                break
+        
+        self.log(f"En İyi Parametreler: {best_params}", log_file)
 
         metrics = []
         def evaluate_and_log(name, y_true, y_pred):
@@ -297,5 +332,5 @@ class DTCTrainer:
 
 if __name__ == "__main__":
     channels = [f"channel{i}" for i in range(1, 9)]
-    trainer = DTCTrainer(file_path="dataset/EMG-data.csv", channels=channels, window_size=100, cutoff=(20, 450), sampling_rate=1000)
+    trainer = DTCTrainer(file_path="dataset/EMG-data.csv", channels=channels, window_size=100, cutoff=(1, 499), sampling_rate=1000)
     trainer.run_scenarios()
