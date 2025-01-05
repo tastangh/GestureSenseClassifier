@@ -1,0 +1,69 @@
+Model Eğitim Logları
+==================================================
+
+Veri Yükleme Tamamlandı
+Toplam Veri Sayısı: 4237907
+Sütunlar Silindi: ['time', 'label']
+Eksik Veriler Temizlendi
+Sınıf 0 Temizlendi
+
+Sınıf Dağılımı (Temizleme Sonrası):
+class
+6    253009
+5    251733
+4    251570
+1    250055
+3    249494
+2    243193
+7     13696
+Name: count, dtype: int64
+Filtreleme Atlandı
+Sınıf Dağılımı (Dengeleme Sonrası):
+class
+1    253009
+2    253009
+3    253009
+4    253009
+5    253009
+6    253009
+7    253009
+Name: count, dtype: int64
+Özellik Çıkarımı Atlandı
+Eğitim, Doğrulama ve Test Setleri Ayrıldı
+Veri Normalizasyonu Tamamlandı
+Epoch 1/500: Eğitim Kaybı: 1.9447, Doğrulama Kaybı: 1.9447
+Epoch 2/500: Eğitim Kaybı: 1.9446, Doğrulama Kaybı: 1.9446
+Epoch 3/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 4/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 5/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 6/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 7/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 8/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 9/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 10/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 11/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 12/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 13/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 14/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 15/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 16/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 17/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 18/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 19/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 20/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 21/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 22/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 23/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 24/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 25/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Epoch 26/500: Eğitim Kaybı: 1.9445, Doğrulama Kaybı: 1.9445
+Early stopping triggered at epoch 26!
+
+Doğrulama Metrikleri:
+Doğruluk: 0.1957, F1 Skoru: 0.1646, Kesinlik: 0.1832, Duyarlılık: 0.1957
+
+Test Metrikleri:
+Doğruluk: 0.1954, F1 Skoru: 0.1643, Kesinlik: 0.1826, Duyarlılık: 0.1954
+Tüm metrikler 'metrikler.csv' dosyasına kaydedildi.
+Senaryo Süresi: 145.04 saniye
+Finished scenario: not_filtered_balanced_data
