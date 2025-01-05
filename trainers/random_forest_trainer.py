@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, confusion_matrix, roc_curve, auc, precision_recall_curve
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, GridSearchCV
 from scipy.signal import butter, filtfilt
@@ -262,125 +262,6 @@ class RandomForestTrainer:
         plt.savefig(os.path.join(save_dir, filename))
         plt.close(fig)
 
-    def plot_feature_importance(self, importances, feature_names, filename, save_dir, scenario_name, use_filter, use_smote, use_feature_extraction, data_cleaning):
-      """
-        Özellik önemini çizen metot.
-        Parametreler:
-            importances (np.array): Özellik önem dereceleri.
-            feature_names (list): Özellik isimleri.
-            filename (str): Kaydedilecek dosya adı.
-            save_dir (str): Kaydedilecek dizin.
-            scenario_name (str): Senaryo adı.
-            use_filter (bool): Filtreleme kullanıldı mı?
-            use_smote (bool): SMOTE kullanıldı mı?
-            use_feature_extraction (bool): Özellik çıkarımı kullanıldı mı?
-            data_cleaning (bool): Veri temizleme kullanıldı mı?
-        """
-      plt.figure(figsize=(10, 6))
-      sorted_indices = np.argsort(importances)[::-1]  # En önemliden en aza sırala
-      sorted_importances = importances[sorted_indices]
-      sorted_feature_names = [feature_names[i] for i in sorted_indices]
-      plt.bar(range(len(sorted_importances)), sorted_importances, tick_label=sorted_feature_names)
-      plt.xticks(rotation=90)
-
-      feature_info = (
-            f"Pencere Boyutu: {self.window_size}, "
-            f"Kesim: {self.cutoff[0]}-{self.cutoff[1]} Hz, "
-            f"Örnekleme Hızı: {self.sampling_rate} Hz, "
-            f"Senaryo: {scenario_name}, "
-            f"Filtreleme: {'Uygulandı' if use_filter else 'Uygulanmadı'}, "
-            f"Dengeleme: {'Uygulandı' if use_smote else 'Uygulanmadı'}, "
-            f"Özellik Çıkarımı: {'Uygulandı' if use_feature_extraction else 'Uygulanmadı'}, "
-            f"Veri Temizleme: {'Uygulandı' if data_cleaning else 'Uygulanmadı'}"
-        )
-
-      plt.title(f"Özellik Önemi\n{feature_info}", fontsize=10, pad=20)
-      plt.xlabel("Özellikler")
-      plt.ylabel("Önem Derecesi")
-      plt.tight_layout()
-      plt.savefig(os.path.join(save_dir, filename))
-      plt.close()
-
-
-    def plot_roc_curve(self, y_true, y_pred_prob, filename, save_dir, scenario_name, use_filter, use_smote, use_feature_extraction, data_cleaning):
-        """
-        ROC eğrisini çizen metot.
-        Parametreler:
-            y_true (np.array): Gerçek etiketler.
-            y_pred_prob (np.array): Tahmin edilen olasılıklar.
-            filename (str): Kaydedilecek dosya adı.
-            save_dir (str): Kaydedilecek dizin.
-             scenario_name (str): Senaryo adı.
-             use_filter (bool): Filtreleme kullanıldı mı?
-             use_smote (bool): SMOTE kullanıldı mı?
-             use_feature_extraction (bool): Özellik çıkarımı kullanıldı mı?
-             data_cleaning (bool): Veri temizleme kullanıldı mı?
-        """
-        fpr, tpr, _ = roc_curve(y_true, y_pred_prob[:, 1])
-        roc_auc = auc(fpr, tpr)
-
-        plt.figure(figsize=(8, 6))
-        plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC eğrisi (AUC = {roc_auc:.2f})')
-        plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        feature_info = (
-            f"Pencere Boyutu: {self.window_size}, "
-            f"Kesim: {self.cutoff[0]}-{self.cutoff[1]} Hz, "
-            f"Örnekleme Hızı: {self.sampling_rate} Hz, "
-            f"Senaryo: {scenario_name}, "
-            f"Filtreleme: {'Uygulandı' if use_filter else 'Uygulanmadı'}, "
-            f"Dengeleme: {'Uygulandı' if use_smote else 'Uygulanmadı'}, "
-            f"Özellik Çıkarımı: {'Uygulandı' if use_feature_extraction else 'Uygulanmadı'}, "
-            f"Veri Temizleme: {'Uygulandı' if data_cleaning else 'Uygulanmadı'}"
-        )
-        plt.title(f"ROC Eğrisi\n{feature_info}", fontsize=10, pad=20)
-        plt.legend(loc="lower right")
-        plt.grid()
-        plt.savefig(os.path.join(save_dir, filename))
-        plt.close()
-
-    def plot_precision_recall_curve(self, y_true, y_pred_prob, filename, save_dir, scenario_name, use_filter, use_smote, use_feature_extraction, data_cleaning):
-        """
-        Precision-Recall eğrisini çizen metot.
-        Parametreler:
-            y_true (np.array): Gerçek etiketler.
-            y_pred_prob (np.array): Tahmin edilen olasılıklar.
-            filename (str): Kaydedilecek dosya adı.
-            save_dir (str): Kaydedilecek dizin.
-            scenario_name (str): Senaryo adı.
-            use_filter (bool): Filtreleme kullanıldı mı?
-            use_smote (bool): SMOTE kullanıldı mı?
-            use_feature_extraction (bool): Özellik çıkarımı kullanıldı mı?
-            data_cleaning (bool): Veri temizleme kullanıldı mı?
-        """
-        precision, recall, _ = precision_recall_curve(y_true, y_pred_prob[:, 1])
-        pr_auc = auc(recall, precision)
-
-        plt.figure(figsize=(8, 6))
-        plt.plot(recall, precision, color='blue', lw=2, label=f'PR Eğrisi (AUC = {pr_auc:.2f})')
-        plt.xlabel('Recall')
-        plt.ylabel('Precision')
-
-        feature_info = (
-            f"Pencere Boyutu: {self.window_size}, "
-            f"Kesim: {self.cutoff[0]}-{self.cutoff[1]} Hz, "
-            f"Örnekleme Hızı: {self.sampling_rate} Hz, "
-            f"Senaryo: {scenario_name}, "
-            f"Filtreleme: {'Uygulandı' if use_filter else 'Uygulanmadı'}, "
-            f"Dengeleme: {'Uygulandı' if use_smote else 'Uygulanmadı'}, "
-            f"Özellik Çıkarımı: {'Uygulandı' if use_feature_extraction else 'Uygulanmadı'}, "
-            f"Veri Temizleme: {'Uygulandı' if data_cleaning else 'Uygulanmadı'}"
-        )
-
-        plt.title(f"Precision-Recall Eğrisi\n{feature_info}", fontsize=10, pad=20)
-        plt.legend(loc="lower left")
-        plt.grid()
-        plt.savefig(os.path.join(save_dir, filename))
-        plt.close()
-
     def train_and_evaluate_model(self, save_dir, use_filter=False, use_smote=False, feature_types=["all"],
                                  model_params={}, data_cleaning=False, normalization=True,
                                  use_feature_extraction=False, scenario_name=""):
@@ -461,8 +342,6 @@ class RandomForestTrainer:
         best_params = grid.best_params_
         self.log(f"Grid Search Sonuçları: En İyi Parametreler: {best_params}", log_file)
         
-        feature_names = [f"feature_{i}" for i in range(features.shape[1])] # Özellik isimleri
-
         # Random Forest modelini eğit
         best_model.fit(X_train, y_train)
         y_train_pred = best_model.predict(X_train)
@@ -481,27 +360,19 @@ class RandomForestTrainer:
                      log_file)
             return accuracy, f1, precision, recall
         
-        y_val_pred_prob = best_model.predict_proba(X_val)
-        y_test_pred_prob = best_model.predict_proba(X_test)
         
         val_accuracy, val_f1, val_precision, val_recall = evaluate_and_log("Doğrulama", y_val, y_val_pred)
         self.plot_confusion_matrix(y_val, y_val_pred, classes=np.unique(labels),
                                    filename="dogrulama_karisiklik_matrisi.png", save_dir=save_dir,
                                    scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote,
                                    use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
-        self.plot_roc_curve(y_val, y_val_pred_prob, filename="dogrulama_roc_curve.png", save_dir=save_dir, scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
-        self.plot_precision_recall_curve(y_val, y_val_pred_prob, filename="dogrulama_pr_curve.png", save_dir=save_dir, scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
 
         test_accuracy, test_f1, test_precision, test_recall = evaluate_and_log("Test", y_test, y_test_pred)
         self.plot_confusion_matrix(y_test, y_test_pred, classes=np.unique(labels),
                                    filename="test_karisiklik_matrisi.png", save_dir=save_dir,
                                    scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote,
                                    use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
-        self.plot_roc_curve(y_test, y_test_pred_prob, filename="test_roc_curve.png", save_dir=save_dir, scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
-        self.plot_precision_recall_curve(y_test, y_test_pred_prob, filename="test_pr_curve.png", save_dir=save_dir,scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
 
-        # Özellik önemini çiz
-        self.plot_feature_importance(best_model.feature_importances_, feature_names, filename="ozellik_onemi.png", save_dir=save_dir, scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
 
         metrics_df = pd.DataFrame({
             'Set': ["Doğrulama", "Test"],
@@ -555,7 +426,7 @@ class RandomForestTrainer:
             "window_size": 100
         })
 
-        # 1. en iyi parametreler 250000'de clas 0 sız augmentaiton 
+        # 2. en iyi parametreler 250000'de clas 0 sız augmentaiton 
         scenarios.append({
             "name": "rf_best_params_cleaning_True",
             "use_filter": True,
@@ -563,6 +434,20 @@ class RandomForestTrainer:
             "feature_types": ["all"],
             "model_params": {},
             "data_cleaning": True,
+            "normalization": True,
+            "use_feature_extraction": True,
+            "cutoff": (1, 499),
+            "window_size": 100
+        })
+
+        # 3. en iyi parametreler 2500000'de clas 0  augmentaiton 
+        scenarios.append({
+            "name": "rf_best_params_cleaning_False",
+            "use_filter": True,
+            "use_smote": True,
+            "feature_types": ["all"],
+            "model_params": {},
+            "data_cleaning": False,
             "normalization": True,
             "use_feature_extraction": True,
             "cutoff": (1, 499),

@@ -32,3 +32,14 @@ Name: count, dtype: int64
 Özellik Çıkarımı Tamamlandı: 17710 örnek
 Eğitim, Doğrulama ve Test Setleri Ayrıldı
 Veri Normalizasyonu Tamamlandı
+NaN değerleri impute edildi
+Grid Search Sonuçları: En İyi Parametreler: {'C': 100, 'gamma': 0.01, 'kernel': 'rbf'}
+
+Doğrulama Metrikleri:
+Doğruluk: 0.8889, F1 Skoru: 0.8887, Kesinlik: 0.8889, Duyarlılık: 0.8889
+
+Test Metrikleri:
+Doğruluk: 0.8909, F1 Skoru: 0.8904, Kesinlik: 0.8904, Duyarlılık: 0.8909
+Tüm metrikler 'metrikler.csv' dosyasına kaydedildi.
+Senaryo Süresi: 687.78 saniye
+Finished scenario: svm_all_enabled

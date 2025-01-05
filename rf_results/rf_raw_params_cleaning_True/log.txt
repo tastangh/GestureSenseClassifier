@@ -22,3 +22,13 @@ Dengeleme Atlandı
 Özellik Çıkarımı Atlandı
 Eğitim, Doğrulama ve Test Setleri Ayrıldı
 Veri Normalizasyonu Tamamlandı
+Grid Search Sonuçları: En İyi Parametreler: {'max_depth': None, 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 200}
+
+Doğrulama Metrikleri:
+Doğruluk: 0.9858, F1 Skoru: 0.9842, Kesinlik: 0.9875, Duyarlılık: 0.9810
+
+Test Metrikleri:
+Doğruluk: 0.9861, F1 Skoru: 0.9855, Kesinlik: 0.9880, Duyarlılık: 0.9830
+Tüm metrikler 'metrikler.csv' dosyasına kaydedildi.
+Senaryo Süresi: 1832.51 saniye
+Finished scenario: rf_raw_params_cleaning_True
