@@ -18,7 +18,22 @@ import multiprocessing
 warnings.filterwarnings("ignore")  # Uyarıları kapat
 
 class LogRegTrainer:
+    """
+    Lojistik Regresyon modelini eğitmek ve değerlendirmek için kullanılan sınıf.
+    """
     def __init__(self, file_path, channels, window_size=200, cutoff=(20, 450), sampling_rate=1000, base_dir="results", patience=20):
+        """
+        Sınıfın başlatıcı metodu.
+
+        Parametreler:
+            file_path (str): Veri setinin dosya yolu.
+            channels (list): Kullanılacak kanal isimlerinin listesi.
+            window_size (int): Özellik çıkarımı için pencere boyutu.
+            cutoff (tuple): Filtreleme için kesim frekansları (alt, üst).
+            sampling_rate (int): Örnekleme frekansı.
+            base_dir (str): Sonuçların kaydedileceği temel dizin.
+            patience (int): Erken durdurma için sabır (epoch sayısı).
+        """
         self.file_path = file_path
         self.channels = channels
         self.window_size = window_size
@@ -28,6 +43,13 @@ class LogRegTrainer:
         self.patience = patience  # erken durdurma için sabır
 
     def log(self, message, log_file):
+        """
+        Log mesajlarını hem konsola yazdıran hem de dosyaya kaydeden metot.
+        
+        Parametreler:
+            message (str): Log mesajı.
+            log_file (str): Log dosyasının yolu.
+        """
         os.makedirs(os.path.dirname(log_file), exist_ok=True)
         print(message)
         with open(log_file, "a") as f:
@@ -35,18 +57,61 @@ class LogRegTrainer:
 
     @staticmethod
     def drop_columns(data, columns):
+        """
+        Veri setinden belirtilen sütunları silen statik metot.
+        
+        Parametreler:
+            data (pd.DataFrame): Veri seti.
+            columns (list): Silinecek sütun isimlerinin listesi.
+        
+        Returns:
+            pd.DataFrame: Sütunları silinmiş veri seti.
+        """
         return data.drop(columns=columns, errors="ignore")
 
     @staticmethod
     def drop_unmarked_class(data, class_column, unmarked_value=0):
+        """
+        Veri setinden belirtilen sınıfa ait olmayan verileri silen statik metot.
+
+        Parametreler:
+            data (pd.DataFrame): Veri seti.
+            class_column (str): Sınıf sütununun adı.
+            unmarked_value (int): Silinecek sınıf değeri.
+        
+        Returns:
+            pd.DataFrame: İşaretlenmemiş sınıfı silinmiş veri seti.
+        """
         return data[data[class_column] != unmarked_value].reset_index(drop=True)
 
     @staticmethod
     def drop_na(data):
+        """
+        Veri setinden eksik verileri (NaN) silen statik metot.
+        
+        Parametreler:
+            data (pd.DataFrame): Veri seti.
+        
+        Returns:
+            pd.DataFrame: Eksik verileri silinmiş veri seti.
+        """
         return data.dropna().reset_index(drop=True)
 
     @staticmethod
     def apply_filter(signal, filter_type, cutoff, order=4, sampling_rate=1000):
+        """
+        Sinyale belirtilen tipte filtre uygulayan statik metot.
+        
+        Parametreler:
+            signal (np.array): Filtrelenecek sinyal.
+            filter_type (str): Filtre tipi ("band").
+            cutoff (tuple): Kesim frekansları (alt, üst).
+            order (int): Filtre derecesi.
+            sampling_rate (int): Örnekleme frekansı.
+        
+        Returns:
+           np.array: Filtrelenmiş sinyal.
+        """
         nyquist = 0.5 * sampling_rate
         if filter_type == "band":
             normalized_cutoff = [freq / nyquist for freq in cutoff]
@@ -56,17 +121,44 @@ class LogRegTrainer:
         return filtfilt(b, a, signal)
 
     def filter_all_channels(self, data, use_filter=True):
+        """
+        Veri setindeki tüm kanallara filtre uygulayan metot.
+
+        Parametreler:
+            data (pd.DataFrame): Veri seti.
+            use_filter (bool): Filtreleme kullanılacak mı (True/False).
+
+        Returns:
+            pd.DataFrame: Filtrelenmiş veri seti.
+        """
         if use_filter:
             for channel in self.channels:
                 data[channel] = self.apply_filter(data[channel].values, "band", self.cutoff, order=4, sampling_rate=self.sampling_rate)
         return data
 
     def update_cutoff(self, cutoff):
+        """
+        Filtre kesim frekanslarını güncelleyen metot.
+        
+        Parametreler:
+             cutoff (tuple): Yeni kesim frekansları.
+        """
         self.cutoff = cutoff
 
 
     @staticmethod
     def balance_data_with_smote(data, class_column, use_smote=True):
+        """
+        SMOTE kullanarak veri setini dengeleyen statik metot.
+
+        Parametreler:
+            data (pd.DataFrame): Veri seti.
+            class_column (str): Sınıf sütununun adı.
+            use_smote (bool): SMOTE kullanılacak mı (True/False).
+
+        Returns:
+            pd.DataFrame: Dengelenmiş veri seti.
+        """
         if use_smote:
             smote = SMOTE(random_state=42)
             X = data.drop(columns=[class_column]).values
@@ -81,6 +173,16 @@ class LogRegTrainer:
 
     @staticmethod
     def advanced_feature_extraction(window, feature_types=["all"]):
+        """
+        Pencereden gelişmiş özellikler çıkaran statik metot.
+
+        Parametreler:
+            window (np.array): Pencere verisi.
+            feature_types (list): Çıkarılacak özelliklerin listesi.
+
+        Returns:
+            np.array: Çıkarılmış özellikler.
+        """
         all_features = []
 
         if "mean_abs_value" in feature_types or "all" in feature_types:
@@ -115,6 +217,16 @@ class LogRegTrainer:
         return np.concatenate(all_features)
 
     def extract_features(self, data, feature_types=["all"]):
+        """
+        Veri setinden özellikler çıkaran metot.
+
+        Parametreler:
+            data (pd.DataFrame): Veri seti.
+            feature_types (list): Çıkarılacak özelliklerin listesi.
+        
+        Returns:
+            tuple: Çıkarılmış özellikler ve etiketler.
+        """
         features = []
         labels = []
         unique_classes = data["class"].unique()
@@ -128,6 +240,21 @@ class LogRegTrainer:
         return np.array(features), np.array(labels)
 
     def plot_confusion_matrix(self, y_true, y_pred, classes, filename, save_dir, scenario_name, use_filter, use_smote, use_feature_extraction, data_cleaning):
+        """
+        Karışıklık matrisini çizen metot.
+        
+        Parametreler:
+             y_true (np.array): Gerçek etiketler.
+             y_pred (np.array): Tahmin edilen etiketler.
+             classes (list): Sınıf isimleri.
+             filename (str): Kaydedilecek dosya adı.
+             save_dir (str): Kaydedilecek dizin.
+             scenario_name (str): Senaryo adı.
+             use_filter (bool): Filtreleme kullanıldı mı?
+             use_smote (bool): SMOTE kullanıldı mı?
+             use_feature_extraction (bool): Özellik çıkarımı kullanıldı mı?
+             data_cleaning (bool): Veri temizleme kullanıldı mı?
+        """
         cm = confusion_matrix(y_true, y_pred)
         fig, ax = plt.subplots(figsize=(10, 8))
         sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=classes, yticklabels=classes, ax=ax)
@@ -153,6 +280,19 @@ class LogRegTrainer:
         plt.close(fig)
 
     def plot_loss_graph(self, train_losses, val_losses, save_dir, scenario_name, use_filter, use_smote, use_feature_extraction, data_cleaning):
+        """
+        Kayıp grafiğini çizen metot.
+        
+        Parametreler:
+             train_losses (list): Eğitim kayıpları.
+             val_losses (list): Doğrulama kayıpları.
+             save_dir (str): Kaydedilecek dizin.
+             scenario_name (str): Senaryo adı.
+             use_filter (bool): Filtreleme kullanıldı mı?
+             use_smote (bool): SMOTE kullanıldı mı?
+             use_feature_extraction (bool): Özellik çıkarımı kullanıldı mı?
+             data_cleaning (bool): Veri temizleme kullanıldı mı?
+        """
         plt.figure(figsize=(10, 6))
         plt.plot(range(1, len(train_losses) + 1), train_losses, label="Eğitim Kaybı")
         plt.plot(range(1, len(val_losses) + 1), val_losses, label="Doğrulama Kaybı")
@@ -175,6 +315,20 @@ class LogRegTrainer:
         self.log("Kayıp grafiği 'loss_graph.png' olarak kaydedildi.", log_file)
 
     def train_and_evaluate_model(self, save_dir, use_filter=False, use_smote=False, feature_types=["all"], model_params={}, data_cleaning=False, normalization=True, use_feature_extraction=False, scenario_name=""):
+        """
+        Modeli eğiten ve değerlendiren ana metot.
+        
+        Parametreler:
+            save_dir (str): Sonuçların kaydedileceği dizin.
+            use_filter (bool): Filtreleme kullanılacak mı (True/False).
+            use_smote (bool): SMOTE kullanılacak mı (True/False).
+            feature_types (list): Kullanılacak özelliklerin listesi.
+            model_params (dict): Lojistik regresyon modelinin parametreleri.
+            data_cleaning (bool): Veri temizleme kullanılacak mı (True/False).
+            normalization (bool): Normalizasyon kullanılacak mı (True/False).
+            use_feature_extraction (bool): Özellik çıkarımı kullanılacak mı (True/False).
+            scenario_name (str): Senaryo adı.
+        """
         start_time = time.time()  # Başlangıç zamanı
         log_file = os.path.join(save_dir, "log.txt")  # her senaryo için ayrı log dosyası
         self.log(f"Starting scenario: {scenario_name}", log_file)
@@ -282,6 +436,12 @@ class LogRegTrainer:
         self.log(f"Finished scenario: {scenario_name}", log_file)  # Senaryo bitiş mesajı
 
     def run_scenario(self, scenario):
+        """
+        Belirtilen senaryoyu çalıştıran metot.
+        
+        Parametreler:
+            scenario (dict): Çalıştırılacak senaryo.
+        """
         scenario_name = scenario["name"]
         save_dir = os.path.join(self.base_dir, scenario_name)
         self.cutoff = scenario.get("cutoff", (20,450)) # add default cutoff value if cutoff isn't there
@@ -292,6 +452,9 @@ class LogRegTrainer:
                                       use_feature_extraction=scenario["use_feature_extraction"], scenario_name=scenario_name)
 
     def run_scenarios(self):
+        """
+        Tüm senaryoları çalıştıran metot.
+        """
         scenarios = [
             {"name": "original_data", "use_filter": False, "use_smote": False, "feature_types": ["all"], "model_params": {}, "data_cleaning": False, "normalization": True, "use_feature_extraction": False},
             {"name": "cleaned_data", "use_filter": False, "use_smote": False, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": False},
