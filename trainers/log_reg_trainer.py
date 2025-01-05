@@ -476,5 +476,5 @@ class LogRegTrainer:
 
 if __name__ == "__main__":
     channels = [f"channel{i}" for i in range(1, 9)]
-    trainer = LogRegTrainer(file_path="dataset/EMG-data.csv", channels=channels, window_size=200, cutoff=(20, 450), sampling_rate=1000, patience=20)
+    trainer = LogRegTrainer(file_path="dataset/EMG-data.csv", channels=channels, window_size=100, cutoff=(20, 450), sampling_rate=1000, patience=20)
     trainer.run_scenarios()
