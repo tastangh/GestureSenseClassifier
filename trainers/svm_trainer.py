@@ -10,13 +10,10 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import os
-from sklearn.metrics import log_loss
-import warnings
 import time
 import multiprocessing
 from matplotlib.colors import ListedColormap
-
-warnings.filterwarnings("ignore")
+from sklearn.impute import SimpleImputer
 
 
 class SVMClassifier:
@@ -234,10 +231,9 @@ class SVMClassifier:
         features = []
         labels = []
         unique_classes = data["class"].unique()
-        for gesture in tqdm(unique_classes, desc="Sınıflar İşleniyor"):
+        for gesture in tqdm(unique_classes, desc="Sınıflar İşleniyor", leave=True):
             subset = data[data["class"] == gesture]
-            for i in tqdm(range(0, len(subset) - self.window_size, self.window_size), desc=f"Sınıf {gesture} İşleniyor",
-                          leave=False):
+            for i in tqdm(range(0, len(subset) - self.window_size, self.window_size), desc=f"Sınıf {gesture} İşleniyor", leave=False):
                 window = subset.iloc[i:i + self.window_size][self.channels].values
                 extracted_features = self.advanced_feature_extraction(window, feature_types=feature_types)
                 features.append(extracted_features)
@@ -286,42 +282,6 @@ class SVMClassifier:
         plt.savefig(os.path.join(save_dir, filename))
         plt.close(fig)
 
-    def plot_loss_graph(self, train_losses, val_losses, save_dir, scenario_name, use_filter, use_smote,
-                        use_feature_extraction, data_cleaning):
-        """
-        Kayıp grafiğini çizen metot.
-
-        Parametreler:
-             train_losses (list): Eğitim kayıpları.
-             val_losses (list): Doğrulama kayıpları.
-             save_dir (str): Kaydedilecek dizin.
-             scenario_name (str): Senaryo adı.
-             use_filter (bool): Filtreleme kullanıldı mı?
-             use_smote (bool): SMOTE kullanıldı mı?
-             use_feature_extraction (bool): Özellik çıkarımı kullanıldı mı?
-             data_cleaning (bool): Veri temizleme kullanıldı mı?
-        """
-        plt.figure(figsize=(10, 6))
-        plt.plot(range(1, len(train_losses) + 1), train_losses, label="Eğitim Kaybı")
-        plt.plot(range(1, len(val_losses) + 1), val_losses, label="Doğrulama Kaybı")
-        plt.xlabel("Epoch")
-        plt.ylabel("Log Loss")
-
-        feature_info = (
-            f"Senaryo: {scenario_name}, "
-            f"Filtreleme: {'Uygulandı' if use_filter else 'Uygulanmadı'}, "
-            f"Dengeleme: {'Uygulandı' if use_smote else 'Uygulanmadı'}, "
-            f"Özellik Çıkarımı: {'Uygulandı' if use_feature_extraction else 'Uygulanmadı'}, "
-            f"Veri Temizleme: {'Uygulandı' if data_cleaning else 'Uygulanmadı'}"
-        )
-        plt.title(f"Eğitim ve Doğrulama Kayıpları\n{feature_info}", fontsize=10)
-        plt.legend()
-        plt.grid()
-        plt.savefig(os.path.join(save_dir, "loss_graph.png"))
-        plt.close()
-        log_file = os.path.join(save_dir, "loss_plot.log")
-        self.log("Kayıp grafiği 'loss_graph.png' olarak kaydedildi.", log_file)
-
     def train_and_evaluate_model(self, save_dir, use_filter=True, use_smote=True, feature_types=["all"],
                                  model_params={}, data_cleaning=False, normalization=True,
                                  use_feature_extraction=True, scenario_name=""):
@@ -352,13 +312,13 @@ class SVMClassifier:
         self.log(f"Toplam Veri Sayısı: {len(data)}", log_file)
 
         if data_cleaning:
-          data = self.drop_columns(data, ["time", "label"])
-          self.log("Sütunlar Silindi: ['time', 'label']", log_file)
-          data = self.drop_na(data)
-          self.log("Eksik Veriler Temizlendi", log_file)
-          data = self.drop_unmarked_class(data, "class", unmarked_value=0)
-          self.log("Sınıf 0 Temizlendi", log_file)
-          self.log(f"\nSınıf Dağılımı (Temizleme Sonrası):\n{data['class'].value_counts()}", log_file)
+            data = self.drop_columns(data, ["time", "label"])
+            self.log("Sütunlar Silindi: ['time', 'label']", log_file)
+            data = self.drop_na(data)
+            self.log("Eksik Veriler Temizlendi", log_file)
+            data = self.drop_unmarked_class(data, "class", unmarked_value=0)
+            self.log("Sınıf 0 Temizlendi", log_file)
+            self.log(f"\nSınıf Dağılımı (Temizleme Sonrası):\n{data['class'].value_counts()}", log_file)
         else:
             self.log("Veri Temizleme Atlandı", log_file)
 
@@ -389,6 +349,12 @@ class SVMClassifier:
             self.log("Veri Normalizasyonu Tamamlandı", log_file)
         else:
             self.log("Veri Normalizasyonu Atlandı", log_file)
+        
+        imputer = SimpleImputer(strategy='mean') # NaN değerleri ortalama ile doldur
+        X_train = imputer.fit_transform(X_train)
+        X_val = imputer.transform(X_val)
+        X_test = imputer.transform(X_test)
+        self.log("NaN değerleri impute edildi", log_file)
 
         # Grid Search ile en iyi parametreleri bul
         param_grid = {
@@ -396,37 +362,19 @@ class SVMClassifier:
             'gamma': [0.001, 0.01, 0.1, 1],
             'kernel': ['rbf', 'linear', 'poly', 'sigmoid']
         }
-        grid = GridSearchCV(SVC(random_state=42, class_weight="balanced", probability=True), param_grid, refit=True, verbose=0, cv=3, scoring="f1_macro")
-        grid.fit(X_train, y_train)
+        grid = GridSearchCV(SVC(random_state=42, class_weight="balanced"), param_grid, refit=True, verbose=0, cv=3, scoring="f1_macro")
+
+        grid.fit(X_train, y_train) # Grid Search Fit işlemini burada yapıyoruz.
+        with tqdm(total=len(grid.cv_results_['params']), desc="Grid Search Devam Ediyor") as pbar:
+             pbar.update(len(grid.cv_results_['params']))  # İlerleme çubuğunu manuel olarak güncelle
+
         best_model = grid.best_estimator_
         best_params = grid.best_params_
         self.log(f"Grid Search Sonuçları: En İyi Parametreler: {best_params}", log_file)
 
-
-        train_losses = []
-        val_losses = []
-        epochs = 100
-        best_val_loss = float('inf')
-        epochs_without_improvement = 0
-
-        # SVM modeli iteratif olarak eğitilmez, bu yüzden tüm veriyi bir kere fit ediyoruz.
+        # SVM modelini eğit
         best_model.fit(X_train, y_train)
-        y_train_pred = best_model.predict(X_train)
-        y_val_pred = best_model.predict(X_val)
-
-        # Log loss hesaplamaları (SVM olasılık çıktısı vermeyebilir, burada bir çözümleme yapalım)
-        try:
-            train_loss = log_loss(y_train, best_model.predict_proba(X_train))
-            val_loss = log_loss(y_val, best_model.predict_proba(X_val))
-        except AttributeError: # olasılık çıktısı yoksa
-             train_loss = 0  # log loss için uygun değer yoksa 0 ata
-             val_loss = 0
-        train_losses.append(train_loss)
-        val_losses.append(val_loss)
-
-        self.log(f"Epoch 1/{epochs}: Eğitim Kaybı: {train_loss:.4f}, Doğrulama Kaybı: {val_loss:.4f}", log_file)
-        self.plot_loss_graph(train_losses, val_losses, save_dir, scenario_name, use_filter, use_smote, use_feature_extraction, data_cleaning)
-
+        
         metrics = []
         def evaluate_and_log(name, y_true, y_pred):
             accuracy = accuracy_score(y_true, y_pred)
@@ -439,8 +387,8 @@ class SVMClassifier:
                      log_file)
             return accuracy, f1, precision, recall
 
-        val_accuracy, val_f1, val_precision, val_recall = evaluate_and_log("Doğrulama", y_val, y_val_pred)
-        self.plot_confusion_matrix(y_val, y_val_pred, classes=np.unique(labels),
+        val_accuracy, val_f1, val_precision, val_recall = evaluate_and_log("Doğrulama", y_val, best_model.predict(X_val))
+        self.plot_confusion_matrix(y_val, best_model.predict(X_val), classes=np.unique(labels),
                                    filename="dogrulama_karisiklik_matrisi.png", save_dir=save_dir,
                                    scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote,
                                    use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
@@ -496,47 +444,31 @@ class SVMClassifier:
             "use_smote": False,
             "feature_types": ["all"],
             "model_params": {},
-            "data_cleaning": False,
+            "data_cleaning": True,
             "normalization": True,
             "use_feature_extraction": False,
             "cutoff": (1, 499),
             "window_size": 100
         })
-
-        # 2. en iyi parametrelerle 
+        
+        # 3. svm_all_enabled
         scenarios.append({
-            "name": "svm_best_params",
+            "name": "svm_all_enabled",
             "use_filter": True,
             "use_smote": True,
             "feature_types": ["all"],
             "model_params": {},
-            "data_cleaning": False,
+            "data_cleaning": True,
             "normalization": True,
-            "use_feature_extraction": False,
+            "use_feature_extraction": True,
             "cutoff": (1, 499),
-            "window_size": 100
+            "window_size": 100,
         })
-
-        # 3. Farklı Kernel Türlerinin Performansı
-        kernel_types = ["linear", "rbf", "poly", "sigmoid"]
-        for kernel in kernel_types:
-            scenarios.append({
-                "name": f"svm_kernel_{kernel}",
-                "use_filter": True,
-                "use_smote": True,
-                "feature_types": ["all"],
-                "model_params": {"kernel": kernel},
-                "data_cleaning": False,
-                "normalization": True,
-                "use_feature_extraction": True,
-                "cutoff": (1, 499),
-                "window_size": 100
-            })
 
 
         # Paralel işlem için senaryoları çalıştırma
         with multiprocessing.Pool() as pool:
-            pool.map(self.run_scenario, scenarios)
+            list(tqdm(pool.imap(self.run_scenario, scenarios), total=len(scenarios), desc="Senaryolar Çalıştırılıyor"))
 
 
 if __name__ == "__main__":

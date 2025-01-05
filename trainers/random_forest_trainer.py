@@ -10,7 +10,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import os
-from sklearn.metrics import log_loss
 import warnings
 import time
 import multiprocessing
@@ -263,41 +262,6 @@ class RandomForestTrainer:
         plt.savefig(os.path.join(save_dir, filename))
         plt.close(fig)
 
-    def plot_loss_graph(self, train_losses, val_losses, save_dir, scenario_name, use_filter, use_smote,
-                        use_feature_extraction, data_cleaning):
-        """
-        Kayıp grafiğini çizen metot.
-        Parametreler:
-             train_losses (list): Eğitim kayıpları.
-             val_losses (list): Doğrulama kayıpları.
-             save_dir (str): Kaydedilecek dizin.
-             scenario_name (str): Senaryo adı.
-             use_filter (bool): Filtreleme kullanıldı mı?
-             use_smote (bool): SMOTE kullanıldı mı?
-             use_feature_extraction (bool): Özellik çıkarımı kullanıldı mı?
-             data_cleaning (bool): Veri temizleme kullanıldı mı?
-        """
-        plt.figure(figsize=(10, 6))
-        plt.plot(range(1, len(train_losses) + 1), train_losses, label="Eğitim Kaybı")
-        plt.plot(range(1, len(val_losses) + 1), val_losses, label="Doğrulama Kaybı")
-        plt.xlabel("Epoch")
-        plt.ylabel("Log Loss")
-
-        feature_info = (
-            f"Senaryo: {scenario_name}, "
-            f"Filtreleme: {'Uygulandı' if use_filter else 'Uygulanmadı'}, "
-            f"Dengeleme: {'Uygulandı' if use_smote else 'Uygulanmadı'}, "
-            f"Özellik Çıkarımı: {'Uygulandı' if use_feature_extraction else 'Uygulanmadı'}, "
-            f"Veri Temizleme: {'Uygulandı' if data_cleaning else 'Uygulanmadı'}"
-        )
-        plt.title(f"Eğitim ve Doğrulama Kayıpları\n{feature_info}", fontsize=10)
-        plt.legend()
-        plt.grid()
-        plt.savefig(os.path.join(save_dir, "loss_graph.png"))
-        plt.close()
-        log_file = os.path.join(save_dir, "loss_plot.log")
-        self.log("Kayıp grafiği 'loss_graph.png' olarak kaydedildi.", log_file)
-
     def plot_feature_importance(self, importances, feature_names, filename, save_dir, scenario_name, use_filter, use_smote, use_feature_extraction, data_cleaning):
       """
         Özellik önemini çizen metot.
@@ -483,15 +447,13 @@ class RandomForestTrainer:
             self.log("Veri Normalizasyonu Tamamlandı", log_file)
         else:
             self.log("Veri Normalizasyonu Atlandı", log_file)
-
         # Grid Search ile en iyi parametreleri bul
-        param_grid = {
-            'n_estimators': [100, 200, 300],
-            'max_depth': [5, 10, 15, None],
-             'min_samples_split': [2, 5, 10],
-             'min_samples_leaf': [1, 2, 4],
-            'class_weight': ['balanced', None]
-        }
+        param_grid = [
+            {'n_estimators': [150], 'max_depth': [5], 'min_samples_split': [2], 'min_samples_leaf': [1]},
+            {'n_estimators': [250], 'max_depth': [10], 'min_samples_split': [2], 'min_samples_leaf': [1]},
+            {'n_estimators': [150], 'max_depth': [10], 'min_samples_split': [5], 'min_samples_leaf': [2]},
+             {'n_estimators': [200], 'max_depth': [None], 'min_samples_split': [2], 'min_samples_leaf': [1]},
+        ]
 
         grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, refit=True, verbose=0, cv=3, scoring="f1_macro")
         grid.fit(X_train, y_train)
@@ -506,13 +468,6 @@ class RandomForestTrainer:
         y_train_pred = best_model.predict(X_train)
         y_val_pred = best_model.predict(X_val)
         y_test_pred = best_model.predict(X_test)
-
-        # Log loss hesaplamaları (Random Forest olasılık çıktısı var)
-        train_loss = log_loss(y_train, best_model.predict_proba(X_train))
-        val_loss = log_loss(y_val, best_model.predict_proba(X_val))
-        
-        self.log(f"Eğitim Kaybı: {train_loss:.4f}, Doğrulama Kaybı: {val_loss:.4f}", log_file)
-        self.plot_loss_graph([train_loss], [val_loss], save_dir, scenario_name, use_filter, use_smote, use_feature_extraction, data_cleaning)
 
         metrics = []
         def evaluate_and_log(name, y_true, y_pred):
@@ -543,13 +498,12 @@ class RandomForestTrainer:
                                    scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote,
                                    use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
         self.plot_roc_curve(y_test, y_test_pred_prob, filename="test_roc_curve.png", save_dir=save_dir, scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
-        self.plot_precision_recall_curve(y_test, y_test_pred_prob, filename="test_pr_curve.png", save_dir=save_dir, scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
+        self.plot_precision_recall_curve(y_test, y_test_pred_prob, filename="test_pr_curve.png", save_dir=save_dir,scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
 
         # Özellik önemini çiz
         self.plot_feature_importance(best_model.feature_importances_, feature_names, filename="ozellik_onemi.png", save_dir=save_dir, scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
 
-
-        metrics_df =        metrics_df = pd.DataFrame({
+        metrics_df = pd.DataFrame({
             'Set': ["Doğrulama", "Test"],
             'Doğruluk': [val_accuracy, test_accuracy],
             'F1 Skoru': [val_f1, test_f1],
@@ -586,35 +540,22 @@ class RandomForestTrainer:
         """
         scenarios = []
 
-        # 1. Ham Veri ile Performans
+
+        # 1. Temizlenmiş ham veri
         scenarios.append({
-            "name": "rf_raw_data",
+            "name": "rf_raw_params_cleaning_True",
             "use_filter": False,
             "use_smote": False,
             "feature_types": ["all"],
             "model_params": {},
-            "data_cleaning": False,
+            "data_cleaning": True,
             "normalization": True,
             "use_feature_extraction": False,
             "cutoff": (1, 499),
             "window_size": 100
         })
 
-        # 2. en iyi parametreler 2.5 milyonda augmentaiton
-        scenarios.append({
-            "name": "rf_best_params_cleaning_False",
-            "use_filter": True,
-            "use_smote": True,
-            "feature_types": ["all"],
-            "model_params": {},
-            "data_cleaning": False,
-            "normalization": True,
-            "use_feature_extraction": False,
-            "cutoff": (1, 499),
-            "window_size": 100
-        })
-
-        # 3. en iyi parametreler 250000'de clas 0 sız augmentaiton 
+        # 1. en iyi parametreler 250000'de clas 0 sız augmentaiton 
         scenarios.append({
             "name": "rf_best_params_cleaning_True",
             "use_filter": True,
@@ -623,7 +564,7 @@ class RandomForestTrainer:
             "model_params": {},
             "data_cleaning": True,
             "normalization": True,
-            "use_feature_extraction": False,
+            "use_feature_extraction": True,
             "cutoff": (1, 499),
             "window_size": 100
         })
@@ -635,7 +576,7 @@ class RandomForestTrainer:
 
         # Paralel işlem için senaryoları çalıştırma
         with multiprocessing.Pool(processes=MAX_WORKERS) as pool:
-            pool.map(self.run_scenario, scenarios)
+            list(tqdm(pool.imap(self.run_scenario, scenarios), total=len(scenarios), desc="Senaryolar İşleniyor"))
 
 
 if __name__ == "__main__":
