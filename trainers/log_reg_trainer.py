@@ -456,18 +456,18 @@ class LogRegTrainer:
         Tüm senaryoları çalıştıran metot.
         """
         scenarios = [
-            # {"name": "original_data", "use_filter": False, "use_smote": False, "feature_types": ["all"], "model_params": {}, "data_cleaning": False, "normalization": True, "use_feature_extraction": False},
-            # {"name": "cleaned_data", "use_filter": False, "use_smote": False, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": False},
-            # {"name": "not_filtered_balanced_data", "use_filter": False, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": False},
-            # {"name": "filtered_data", "use_filter": True, "use_smote": False, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": False},
-            # {"name": "balanced_data", "use_filter": True, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": False},
-            # {"name": "all_processed_data_without_cleaned", "use_filter": True, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": False, "normalization": True, "use_feature_extraction": True},
-            # {"name": "all_processed_data_without_balanced", "use_filter": True, "use_smote": False, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": True},
-            {"name": "all_processed_data_without_cleaned_with_filtered_1_499Hz_wsize50", "use_filter": True, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": False, "normalization": True, "use_feature_extraction": True,"cutoff": (1, 499)},
-        #     {"name": "all_processed_data_without_balanced_and_cleaned_with_filtered_1_499Hz", "use_filter": True, "use_smote": False, "feature_types": ["all"], "model_params": {}, "data_cleaning": False, "normalization": True, "use_feature_extraction": True,"cutoff": (1, 499)},
-        #     {"name": "all_processed_data_without_filtered", "use_filter": False, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": True},
-        #     {"name": "all_processed_data", "use_filter": True, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": True},
-        #      {"name": "all_processed_data_with_filtered_1_499Hz", "use_filter": True, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "cutoff": (1, 499)}
+            {"name": "original_data", "use_filter": False, "use_smote": False, "feature_types": ["all"], "model_params": {}, "data_cleaning": False, "normalization": True, "use_feature_extraction": False},
+            {"name": "cleaned_data", "use_filter": False, "use_smote": False, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": False},
+            {"name": "not_filtered_balanced_data", "use_filter": False, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": False},
+            {"name": "filtered_data", "use_filter": True, "use_smote": False, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": False},
+            {"name": "balanced_data", "use_filter": True, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": False},
+            {"name": "all_processed_data_without_cleaned", "use_filter": True, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": False, "normalization": True, "use_feature_extraction": True},
+            {"name": "all_processed_data_without_balanced", "use_filter": True, "use_smote": False, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": True},
+            {"name": "all_processed_data_without_cleaned_with_filtered_1_499Hz", "use_filter": True, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": False, "normalization": True, "use_feature_extraction": True,"cutoff": (1, 499)},
+            {"name": "all_processed_data_without_balanced_and_cleaned_with_filtered_1_499Hz", "use_filter": True, "use_smote": False, "feature_types": ["all"], "model_params": {}, "data_cleaning": False, "normalization": True, "use_feature_extraction": True,"cutoff": (1, 499)},
+            {"name": "all_processed_data_without_filtered", "use_filter": False, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": True},
+            {"name": "all_processed_data", "use_filter": True, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": True},
+             {"name": "all_processed_data_with_filtered_1_499Hz", "use_filter": True, "use_smote": True, "feature_types": ["all"], "model_params": {}, "data_cleaning": True, "normalization": True, "use_feature_extraction": True, "cutoff": (1, 499)}
         ]
 
         with multiprocessing.Pool() as pool:
@@ -476,5 +476,5 @@ class LogRegTrainer:
 
 if __name__ == "__main__":
     channels = [f"channel{i}" for i in range(1, 9)]
-    trainer = LogRegTrainer(file_path="dataset/EMG-data.csv", channels=channels, window_size=50, cutoff=(20, 450), sampling_rate=1000, patience=20)
+    trainer = LogRegTrainer(file_path="dataset/EMG-data.csv", channels=channels, window_size=200, cutoff=(20, 450), sampling_rate=1000, patience=20)
     trainer.run_scenarios()
