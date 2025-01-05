@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
-from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, confusion_matrix
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, confusion_matrix, roc_curve, auc, precision_recall_curve
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, GridSearchCV
 from scipy.signal import butter, filtfilt
@@ -16,19 +16,17 @@ import time
 import multiprocessing
 from matplotlib.colors import ListedColormap
 
+
 warnings.filterwarnings("ignore")
 
-
-class SVMClassifier:
+class RandomForestTrainer:
     """
-    SVM (Destek Vektör Makineleri) modelini eğitmek ve değerlendirmek için kullanılan sınıf.
+    Random Forest modelini eğitmek, değerlendirmek ve görselleştirmek için kullanılan sınıf.
     """
 
-    def __init__(self, file_path, channels, window_size=100, cutoff=(1, 499), sampling_rate=1000, base_dir="results",
-                 patience=20):
-        """
+    def __init__(self, file_path, channels, window_size=100, cutoff=(1, 499), sampling_rate=1000, base_dir="results"):
+      """
         Sınıfın başlatıcı metodu.
-
         Parametreler:
             file_path (str): Veri setinin dosya yolu.
             channels (list): Kullanılacak kanal isimlerinin listesi.
@@ -36,20 +34,17 @@ class SVMClassifier:
             cutoff (tuple): Filtreleme için kesim frekansları (alt, üst).
             sampling_rate (int): Örnekleme frekansı.
             base_dir (str): Sonuçların kaydedileceği temel dizin.
-            patience (int): Erken durdurma için sabır (epoch sayısı).
-        """
-        self.file_path = file_path
-        self.channels = channels
-        self.window_size = window_size
-        self.cutoff = cutoff
-        self.sampling_rate = sampling_rate
-        self.base_dir = base_dir
-        self.patience = patience  # erken durdurma için sabır
-
+      """
+      self.file_path = file_path
+      self.channels = channels
+      self.window_size = window_size
+      self.cutoff = cutoff
+      self.sampling_rate = sampling_rate
+      self.base_dir = base_dir
+    
     def log(self, message, log_file):
         """
         Log mesajlarını hem konsola yazdıran hem de dosyaya kaydeden metot.
-
         Parametreler:
             message (str): Log mesajı.
             log_file (str): Log dosyasının yolu.
@@ -63,11 +58,9 @@ class SVMClassifier:
     def drop_columns(data, columns):
         """
         Veri setinden belirtilen sütunları silen statik metot.
-
         Parametreler:
             data (pd.DataFrame): Veri seti.
             columns (list): Silinecek sütun isimlerinin listesi.
-
         Returns:
             pd.DataFrame: Sütunları silinmiş veri seti.
         """
@@ -77,12 +70,10 @@ class SVMClassifier:
     def drop_unmarked_class(data, class_column, unmarked_value=0):
         """
         Veri setinden belirtilen sınıfa ait olmayan verileri silen statik metot.
-
         Parametreler:
             data (pd.DataFrame): Veri seti.
             class_column (str): Sınıf sütununun adı.
             unmarked_value (int): Silinecek sınıf değeri.
-
         Returns:
             pd.DataFrame: İşaretlenmemiş sınıfı silinmiş veri seti.
         """
@@ -92,10 +83,8 @@ class SVMClassifier:
     def drop_na(data):
         """
         Veri setinden eksik verileri (NaN) silen statik metot.
-
         Parametreler:
             data (pd.DataFrame): Veri seti.
-
         Returns:
             pd.DataFrame: Eksik verileri silinmiş veri seti.
         """
@@ -105,14 +94,12 @@ class SVMClassifier:
     def apply_filter(signal, filter_type, cutoff, order=4, sampling_rate=1000):
         """
         Sinyale belirtilen tipte filtre uygulayan statik metot.
-
         Parametreler:
             signal (np.array): Filtrelenecek sinyal.
             filter_type (str): Filtre tipi ("band").
             cutoff (tuple): Kesim frekansları (alt, üst).
             order (int): Filtre derecesi.
             sampling_rate (int): Örnekleme frekansı.
-
         Returns:
            np.array: Filtrelenmiş sinyal.
         """
@@ -127,11 +114,9 @@ class SVMClassifier:
     def filter_all_channels(self, data, use_filter=True):
         """
         Veri setindeki tüm kanallara filtre uygulayan metot.
-
         Parametreler:
             data (pd.DataFrame): Veri seti.
             use_filter (bool): Filtreleme kullanılacak mı (True/False).
-
         Returns:
             pd.DataFrame: Filtrelenmiş veri seti.
         """
@@ -144,7 +129,6 @@ class SVMClassifier:
     def update_cutoff(self, cutoff):
         """
         Filtre kesim frekanslarını güncelleyen metot.
-
         Parametreler:
              cutoff (tuple): Yeni kesim frekansları.
         """
@@ -154,12 +138,10 @@ class SVMClassifier:
     def balance_data_with_smote(data, class_column, use_smote=True):
         """
         SMOTE kullanarak veri setini dengeleyen statik metot.
-
         Parametreler:
             data (pd.DataFrame): Veri seti.
             class_column (str): Sınıf sütununun adı.
             use_smote (bool): SMOTE kullanılacak mı (True/False).
-
         Returns:
             pd.DataFrame: Dengelenmiş veri seti.
         """
@@ -179,11 +161,9 @@ class SVMClassifier:
     def advanced_feature_extraction(window, feature_types=["all"]):
         """
         Pencereden gelişmiş özellikler çıkaran statik metot.
-
         Parametreler:
             window (np.array): Pencere verisi.
             feature_types (list): Çıkarılacak özelliklerin listesi.
-
         Returns:
             np.array: Çıkarılmış özellikler.
         """
@@ -223,11 +203,9 @@ class SVMClassifier:
     def extract_features(self, data, feature_types=["all"]):
         """
         Veri setinden özellikler çıkaran metot.
-
         Parametreler:
             data (pd.DataFrame): Veri seti.
             feature_types (list): Çıkarılacak özelliklerin listesi.
-
         Returns:
             tuple: Çıkarılmış özellikler ve etiketler.
         """
@@ -249,7 +227,6 @@ class SVMClassifier:
                               use_feature_extraction, data_cleaning):
         """
         Karışıklık matrisini çizen metot.
-
         Parametreler:
              y_true (np.array): Gerçek etiketler.
              y_pred (np.array): Tahmin edilen etiketler.
@@ -290,7 +267,6 @@ class SVMClassifier:
                         use_feature_extraction, data_cleaning):
         """
         Kayıp grafiğini çizen metot.
-
         Parametreler:
              train_losses (list): Eğitim kayıpları.
              val_losses (list): Doğrulama kayıpları.
@@ -322,18 +298,136 @@ class SVMClassifier:
         log_file = os.path.join(save_dir, "loss_plot.log")
         self.log("Kayıp grafiği 'loss_graph.png' olarak kaydedildi.", log_file)
 
-    def train_and_evaluate_model(self, save_dir, use_filter=True, use_smote=True, feature_types=["all"],
+    def plot_feature_importance(self, importances, feature_names, filename, save_dir, scenario_name, use_filter, use_smote, use_feature_extraction, data_cleaning):
+      """
+        Özellik önemini çizen metot.
+        Parametreler:
+            importances (np.array): Özellik önem dereceleri.
+            feature_names (list): Özellik isimleri.
+            filename (str): Kaydedilecek dosya adı.
+            save_dir (str): Kaydedilecek dizin.
+            scenario_name (str): Senaryo adı.
+            use_filter (bool): Filtreleme kullanıldı mı?
+            use_smote (bool): SMOTE kullanıldı mı?
+            use_feature_extraction (bool): Özellik çıkarımı kullanıldı mı?
+            data_cleaning (bool): Veri temizleme kullanıldı mı?
+        """
+      plt.figure(figsize=(10, 6))
+      sorted_indices = np.argsort(importances)[::-1]  # En önemliden en aza sırala
+      sorted_importances = importances[sorted_indices]
+      sorted_feature_names = [feature_names[i] for i in sorted_indices]
+      plt.bar(range(len(sorted_importances)), sorted_importances, tick_label=sorted_feature_names)
+      plt.xticks(rotation=90)
+
+      feature_info = (
+            f"Pencere Boyutu: {self.window_size}, "
+            f"Kesim: {self.cutoff[0]}-{self.cutoff[1]} Hz, "
+            f"Örnekleme Hızı: {self.sampling_rate} Hz, "
+            f"Senaryo: {scenario_name}, "
+            f"Filtreleme: {'Uygulandı' if use_filter else 'Uygulanmadı'}, "
+            f"Dengeleme: {'Uygulandı' if use_smote else 'Uygulanmadı'}, "
+            f"Özellik Çıkarımı: {'Uygulandı' if use_feature_extraction else 'Uygulanmadı'}, "
+            f"Veri Temizleme: {'Uygulandı' if data_cleaning else 'Uygulanmadı'}"
+        )
+
+      plt.title(f"Özellik Önemi\n{feature_info}", fontsize=10, pad=20)
+      plt.xlabel("Özellikler")
+      plt.ylabel("Önem Derecesi")
+      plt.tight_layout()
+      plt.savefig(os.path.join(save_dir, filename))
+      plt.close()
+
+
+    def plot_roc_curve(self, y_true, y_pred_prob, filename, save_dir, scenario_name, use_filter, use_smote, use_feature_extraction, data_cleaning):
+        """
+        ROC eğrisini çizen metot.
+        Parametreler:
+            y_true (np.array): Gerçek etiketler.
+            y_pred_prob (np.array): Tahmin edilen olasılıklar.
+            filename (str): Kaydedilecek dosya adı.
+            save_dir (str): Kaydedilecek dizin.
+             scenario_name (str): Senaryo adı.
+             use_filter (bool): Filtreleme kullanıldı mı?
+             use_smote (bool): SMOTE kullanıldı mı?
+             use_feature_extraction (bool): Özellik çıkarımı kullanıldı mı?
+             data_cleaning (bool): Veri temizleme kullanıldı mı?
+        """
+        fpr, tpr, _ = roc_curve(y_true, y_pred_prob[:, 1])
+        roc_auc = auc(fpr, tpr)
+
+        plt.figure(figsize=(8, 6))
+        plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC eğrisi (AUC = {roc_auc:.2f})')
+        plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        feature_info = (
+            f"Pencere Boyutu: {self.window_size}, "
+            f"Kesim: {self.cutoff[0]}-{self.cutoff[1]} Hz, "
+            f"Örnekleme Hızı: {self.sampling_rate} Hz, "
+            f"Senaryo: {scenario_name}, "
+            f"Filtreleme: {'Uygulandı' if use_filter else 'Uygulanmadı'}, "
+            f"Dengeleme: {'Uygulandı' if use_smote else 'Uygulanmadı'}, "
+            f"Özellik Çıkarımı: {'Uygulandı' if use_feature_extraction else 'Uygulanmadı'}, "
+            f"Veri Temizleme: {'Uygulandı' if data_cleaning else 'Uygulanmadı'}"
+        )
+        plt.title(f"ROC Eğrisi\n{feature_info}", fontsize=10, pad=20)
+        plt.legend(loc="lower right")
+        plt.grid()
+        plt.savefig(os.path.join(save_dir, filename))
+        plt.close()
+
+    def plot_precision_recall_curve(self, y_true, y_pred_prob, filename, save_dir, scenario_name, use_filter, use_smote, use_feature_extraction, data_cleaning):
+        """
+        Precision-Recall eğrisini çizen metot.
+        Parametreler:
+            y_true (np.array): Gerçek etiketler.
+            y_pred_prob (np.array): Tahmin edilen olasılıklar.
+            filename (str): Kaydedilecek dosya adı.
+            save_dir (str): Kaydedilecek dizin.
+            scenario_name (str): Senaryo adı.
+            use_filter (bool): Filtreleme kullanıldı mı?
+            use_smote (bool): SMOTE kullanıldı mı?
+            use_feature_extraction (bool): Özellik çıkarımı kullanıldı mı?
+            data_cleaning (bool): Veri temizleme kullanıldı mı?
+        """
+        precision, recall, _ = precision_recall_curve(y_true, y_pred_prob[:, 1])
+        pr_auc = auc(recall, precision)
+
+        plt.figure(figsize=(8, 6))
+        plt.plot(recall, precision, color='blue', lw=2, label=f'PR Eğrisi (AUC = {pr_auc:.2f})')
+        plt.xlabel('Recall')
+        plt.ylabel('Precision')
+
+        feature_info = (
+            f"Pencere Boyutu: {self.window_size}, "
+            f"Kesim: {self.cutoff[0]}-{self.cutoff[1]} Hz, "
+            f"Örnekleme Hızı: {self.sampling_rate} Hz, "
+            f"Senaryo: {scenario_name}, "
+            f"Filtreleme: {'Uygulandı' if use_filter else 'Uygulanmadı'}, "
+            f"Dengeleme: {'Uygulandı' if use_smote else 'Uygulanmadı'}, "
+            f"Özellik Çıkarımı: {'Uygulandı' if use_feature_extraction else 'Uygulanmadı'}, "
+            f"Veri Temizleme: {'Uygulandı' if data_cleaning else 'Uygulanmadı'}"
+        )
+
+        plt.title(f"Precision-Recall Eğrisi\n{feature_info}", fontsize=10, pad=20)
+        plt.legend(loc="lower left")
+        plt.grid()
+        plt.savefig(os.path.join(save_dir, filename))
+        plt.close()
+
+    def train_and_evaluate_model(self, save_dir, use_filter=False, use_smote=False, feature_types=["all"],
                                  model_params={}, data_cleaning=False, normalization=True,
-                                 use_feature_extraction=True, scenario_name=""):
+                                 use_feature_extraction=False, scenario_name=""):
         """
         Modeli eğiten ve değerlendiren ana metot.
-
         Parametreler:
             save_dir (str): Sonuçların kaydedileceği dizin.
             use_filter (bool): Filtreleme kullanılacak mı (True/False).
             use_smote (bool): SMOTE kullanılacak mı (True/False).
             feature_types (list): Kullanılacak özelliklerin listesi.
-            model_params (dict): SVM modelinin parametreleri.
+            model_params (dict): Random Forest modelinin parametreleri.
             data_cleaning (bool): Veri temizleme kullanılacak mı (True/False).
             normalization (bool): Normalizasyon kullanılacak mı (True/False).
             use_feature_extraction (bool): Özellik çıkarımı kullanılacak mı (True/False).
@@ -392,40 +486,33 @@ class SVMClassifier:
 
         # Grid Search ile en iyi parametreleri bul
         param_grid = {
-            'C': [0.1, 1, 10, 100],
-            'gamma': [0.001, 0.01, 0.1, 1],
-            'kernel': ['rbf', 'linear', 'poly', 'sigmoid']
+            'n_estimators': [100, 200, 300],
+            'max_depth': [5, 10, 15, None],
+             'min_samples_split': [2, 5, 10],
+             'min_samples_leaf': [1, 2, 4],
+            'class_weight': ['balanced', None]
         }
-        grid = GridSearchCV(SVC(random_state=42, class_weight="balanced", probability=True), param_grid, refit=True, verbose=0, cv=3, scoring="f1_macro")
+
+        grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, refit=True, verbose=0, cv=3, scoring="f1_macro")
         grid.fit(X_train, y_train)
         best_model = grid.best_estimator_
         best_params = grid.best_params_
         self.log(f"Grid Search Sonuçları: En İyi Parametreler: {best_params}", log_file)
+        
+        feature_names = [f"feature_{i}" for i in range(features.shape[1])] # Özellik isimleri
 
-
-        train_losses = []
-        val_losses = []
-        epochs = 100
-        best_val_loss = float('inf')
-        epochs_without_improvement = 0
-
-        # SVM modeli iteratif olarak eğitilmez, bu yüzden tüm veriyi bir kere fit ediyoruz.
+        # Random Forest modelini eğit
         best_model.fit(X_train, y_train)
         y_train_pred = best_model.predict(X_train)
         y_val_pred = best_model.predict(X_val)
+        y_test_pred = best_model.predict(X_test)
 
-        # Log loss hesaplamaları (SVM olasılık çıktısı vermeyebilir, burada bir çözümleme yapalım)
-        try:
-            train_loss = log_loss(y_train, best_model.predict_proba(X_train))
-            val_loss = log_loss(y_val, best_model.predict_proba(X_val))
-        except AttributeError: # olasılık çıktısı yoksa
-             train_loss = 0  # log loss için uygun değer yoksa 0 ata
-             val_loss = 0
-        train_losses.append(train_loss)
-        val_losses.append(val_loss)
-
-        self.log(f"Epoch 1/{epochs}: Eğitim Kaybı: {train_loss:.4f}, Doğrulama Kaybı: {val_loss:.4f}", log_file)
-        self.plot_loss_graph(train_losses, val_losses, save_dir, scenario_name, use_filter, use_smote, use_feature_extraction, data_cleaning)
+        # Log loss hesaplamaları (Random Forest olasılık çıktısı var)
+        train_loss = log_loss(y_train, best_model.predict_proba(X_train))
+        val_loss = log_loss(y_val, best_model.predict_proba(X_val))
+        
+        self.log(f"Eğitim Kaybı: {train_loss:.4f}, Doğrulama Kaybı: {val_loss:.4f}", log_file)
+        self.plot_loss_graph([train_loss], [val_loss], save_dir, scenario_name, use_filter, use_smote, use_feature_extraction, data_cleaning)
 
         metrics = []
         def evaluate_and_log(name, y_true, y_pred):
@@ -438,20 +525,31 @@ class SVMClassifier:
                      f"Doğruluk: {accuracy:.4f}, F1 Skoru: {f1:.4f}, Kesinlik: {precision:.4f}, Duyarlılık: {recall:.4f}",
                      log_file)
             return accuracy, f1, precision, recall
-
+        
+        y_val_pred_prob = best_model.predict_proba(X_val)
+        y_test_pred_prob = best_model.predict_proba(X_test)
+        
         val_accuracy, val_f1, val_precision, val_recall = evaluate_and_log("Doğrulama", y_val, y_val_pred)
         self.plot_confusion_matrix(y_val, y_val_pred, classes=np.unique(labels),
                                    filename="dogrulama_karisiklik_matrisi.png", save_dir=save_dir,
                                    scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote,
                                    use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
+        self.plot_roc_curve(y_val, y_val_pred_prob, filename="dogrulama_roc_curve.png", save_dir=save_dir, scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
+        self.plot_precision_recall_curve(y_val, y_val_pred_prob, filename="dogrulama_pr_curve.png", save_dir=save_dir, scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
 
-        test_accuracy, test_f1, test_precision, test_recall = evaluate_and_log("Test", y_test, best_model.predict(X_test))
-        self.plot_confusion_matrix(y_test, best_model.predict(X_test), classes=np.unique(labels),
+        test_accuracy, test_f1, test_precision, test_recall = evaluate_and_log("Test", y_test, y_test_pred)
+        self.plot_confusion_matrix(y_test, y_test_pred, classes=np.unique(labels),
                                    filename="test_karisiklik_matrisi.png", save_dir=save_dir,
                                    scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote,
                                    use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
+        self.plot_roc_curve(y_test, y_test_pred_prob, filename="test_roc_curve.png", save_dir=save_dir, scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
+        self.plot_precision_recall_curve(y_test, y_test_pred_prob, filename="test_pr_curve.png", save_dir=save_dir, scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
 
-        metrics_df = pd.DataFrame({
+        # Özellik önemini çiz
+        self.plot_feature_importance(best_model.feature_importances_, feature_names, filename="ozellik_onemi.png", save_dir=save_dir, scenario_name=scenario_name, use_filter=use_filter, use_smote=use_smote, use_feature_extraction=use_feature_extraction, data_cleaning=data_cleaning)
+
+
+        metrics_df =        metrics_df = pd.DataFrame({
             'Set': ["Doğrulama", "Test"],
             'Doğruluk': [val_accuracy, test_accuracy],
             'F1 Skoru': [val_f1, test_f1],
@@ -469,7 +567,6 @@ class SVMClassifier:
     def run_scenario(self, scenario):
         """
         Belirtilen senaryoyu çalıştıran metot.
-
         Parametreler:
             scenario (dict): Çalıştırılacak senaryo.
         """
@@ -485,13 +582,13 @@ class SVMClassifier:
 
     def run_scenarios(self):
         """
-        Tüm senaryoları çalıştıran metot.
+        Random Forest için senaryo tanımlamaları.
         """
         scenarios = []
 
         # 1. Ham Veri ile Performans
         scenarios.append({
-            "name": "svm_raw_data",
+            "name": "rf_raw_data",
             "use_filter": False,
             "use_smote": False,
             "feature_types": ["all"],
@@ -503,9 +600,9 @@ class SVMClassifier:
             "window_size": 100
         })
 
-        # 2. en iyi parametrelerle 
+        # 2. en iyi parametreler 2.5 milyonda augmentaiton
         scenarios.append({
-            "name": "svm_best_params",
+            "name": "rf_best_params_cleaning_False",
             "use_filter": True,
             "use_smote": True,
             "feature_types": ["all"],
@@ -517,30 +614,32 @@ class SVMClassifier:
             "window_size": 100
         })
 
-        # 3. Farklı Kernel Türlerinin Performansı
-        kernel_types = ["linear", "rbf", "poly", "sigmoid"]
-        for kernel in kernel_types:
-            scenarios.append({
-                "name": f"svm_kernel_{kernel}",
-                "use_filter": True,
-                "use_smote": True,
-                "feature_types": ["all"],
-                "model_params": {"kernel": kernel},
-                "data_cleaning": False,
-                "normalization": True,
-                "use_feature_extraction": True,
-                "cutoff": (1, 499),
-                "window_size": 100
-            })
+        # 3. en iyi parametreler 250000'de clas 0 sız augmentaiton 
+        scenarios.append({
+            "name": "rf_best_params_cleaning_True",
+            "use_filter": True,
+            "use_smote": True,
+            "feature_types": ["all"],
+            "model_params": {},
+            "data_cleaning": True,
+            "normalization": True,
+            "use_feature_extraction": False,
+            "cutoff": (1, 499),
+            "window_size": 100
+        })
 
+        from multiprocessing import cpu_count
+
+        # Maksimum worker sayısını belirleyin
+        MAX_WORKERS = max(1, cpu_count() - 1)  # Çekirdek sayısının 1 eksiği kadar kullanın.
 
         # Paralel işlem için senaryoları çalıştırma
-        with multiprocessing.Pool() as pool:
+        with multiprocessing.Pool(processes=MAX_WORKERS) as pool:
             pool.map(self.run_scenario, scenarios)
 
 
 if __name__ == "__main__":
     channels = [f"channel{i}" for i in range(1, 9)]
-    trainer = SVMClassifier(file_path="dataset/EMG-data.csv", channels=channels, window_size=100, cutoff=(1, 499),
-                           sampling_rate=1000, patience=20)
+    trainer = RandomForestTrainer(file_path="dataset/EMG-data.csv", channels=channels, window_size=100, cutoff=(1, 499),
+                           sampling_rate=1000)
     trainer.run_scenarios()
