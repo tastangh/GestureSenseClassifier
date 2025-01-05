@@ -450,7 +450,7 @@ class SVMClassifier:
             "cutoff": (1, 499),
             "window_size": 100
         })
-        # 3. svm_all_enabled_without_cleaned
+        # 2. svm_all_enabled_without_cleaned
         scenarios.append({
             "name": "svm_all_enabled_without_cleaned",
             "use_filter": True,
