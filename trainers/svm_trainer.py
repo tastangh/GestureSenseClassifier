@@ -437,33 +437,7 @@ class SVMClassifier:
         """
         scenarios = []
 
-        # 1. Ham Veri ile Performans
-        scenarios.append({
-            "name": "svm_raw_data",
-            "use_filter": False,
-            "use_smote": False,
-            "feature_types": ["all"],
-            "model_params": {},
-            "data_cleaning": True,
-            "normalization": True,
-            "use_feature_extraction": False,
-            "cutoff": (1, 499),
-            "window_size": 100
-        })
-        # 2. svm_all_enabled_without_cleaned
-        scenarios.append({
-            "name": "svm_all_enabled_without_cleaned",
-            "use_filter": True,
-            "use_smote": True,
-            "feature_types": ["all"],
-            "model_params": {},
-            "data_cleaning": False,
-            "normalization": True,
-            "use_feature_extraction": True,
-            "cutoff": (1, 499),
-            "window_size": 100,
-        })
-        # 3. svm_all_enabled
+        # 1. svm_all_enabled
         scenarios.append({
             "name": "svm_all_enabled",
             "use_filter": True,
@@ -476,11 +450,6 @@ class SVMClassifier:
             "cutoff": (1, 499),
             "window_size": 100,
         })
-
-
-        # Paralel işlem için senaryoları çalıştırma
-        with multiprocessing.Pool() as pool:
-            list(tqdm(pool.imap(self.run_scenario, scenarios), total=len(scenarios), desc="Senaryolar Çalıştırılıyor"))
 
 
 if __name__ == "__main__":
