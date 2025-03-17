@@ -2,6 +2,8 @@
 
 Bu proje, makine öğrenimi ve derin öğrenme algoritmalarını kullanarak model eğitimi ve değerlendirmesi yapmayı amaçlamaktadır. Proje kapsamında dört farklı makine öğrenimi algoritması (Karar Ağacı, Lojistik Regresyon, Random Forest ve SVM) ile iki farklı derin öğrenme yaklaşımı (LSTM ve genel sinir ağları) kullanılmıştır.
 
+Dataset
+https://www.kaggle.com/datasets/sojanprajapati/emg-signal-for-gesture-recognition/data
 ## Proje Yapısı
 
 Proje aşağıdaki gibi bir klasör yapısına sahiptir:
