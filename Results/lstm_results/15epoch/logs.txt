@@ -1,0 +1,32 @@
+Veri başarıyla okundu. Satır sayısı: 4237907
+Veri temizlendi. Kayıp veriler: 0
+Özellik sayısı (X): 4237907
+Etiket sayısı (y): 4237907
+Veriler başarıyla normalize edildi.
+Veri başarıyla bölündü:
+Eğitim seti: 2542744 örnek
+Doğrulama seti: 847581 örnek
+Test seti: 847582 örnek
+Eğitim veri kümesi oluşturuldu: 2542744 örnek
+Doğrulama veri kümesi oluşturuldu: 847581 örnek
+Test veri kümesi oluşturuldu: 847582 örnek
+Eğitim DataLoader oluşturuldu: 39731 batch
+Doğrulama DataLoader oluşturuldu: 13244 batch
+Test DataLoader oluşturuldu: 13244 batch
+device -  cuda
+Epoch [1/15], Train Loss: 0.9374, Val Loss: 0.8995, Val Accuracy: 0.6458, Val F1: 0.1676
+Epoch [2/15], Train Loss: 0.8973, Val Loss: 0.8839, Val Accuracy: 0.6474, Val F1: 0.1866
+Epoch [3/15], Train Loss: 0.8756, Val Loss: 0.8567, Val Accuracy: 0.6507, Val F1: 0.1987
+Epoch [4/15], Train Loss: 0.8377, Val Loss: 0.8103, Val Accuracy: 0.6617, Val F1: 0.2866
+Epoch [5/15], Train Loss: 0.7777, Val Loss: 0.7423, Val Accuracy: 0.6853, Val F1: 0.3989
+Epoch [6/15], Train Loss: 0.7062, Val Loss: 0.6767, Val Accuracy: 0.7145, Val F1: 0.4813
+Epoch [7/15], Train Loss: 0.6366, Val Loss: 0.6148, Val Accuracy: 0.7439, Val F1: 0.5477
+Epoch [8/15], Train Loss: 0.5745, Val Loss: 0.5609, Val Accuracy: 0.7723, Val F1: 0.6232
+Epoch [9/15], Train Loss: 0.5209, Val Loss: 0.5148, Val Accuracy: 0.7995, Val F1: 0.6786
+Epoch [10/15], Train Loss: 0.4766, Val Loss: 0.4827, Val Accuracy: 0.8168, Val F1: 0.7097
+Epoch [11/15], Train Loss: 0.4389, Val Loss: 0.4527, Val Accuracy: 0.8319, Val F1: 0.7365
+Epoch [12/15], Train Loss: 0.4065, Val Loss: 0.4229, Val Accuracy: 0.8479, Val F1: 0.7683
+Epoch [13/15], Train Loss: 0.3797, Val Loss: 0.3951, Val Accuracy: 0.8611, Val F1: 0.7902
+Epoch [14/15], Train Loss: 0.3564, Val Loss: 0.3819, Val Accuracy: 0.8695, Val F1: 0.8023
+Epoch [15/15], Train Loss: 0.3361, Val Loss: 0.3721, Val Accuracy: 0.8752, Val F1: 0.8111
+Test Accuracy: 0.8746, Test F1: 0.8100, Test Recall: 0.7841, Test Precision: 0.8454

@@ -1,0 +1,21 @@
+Veri temizlendi. Kayıp veriler: 0
+Özellik sayısı (X): 4237907
+Etiket sayısı (y): 4237907
+Veriler başarıyla normalize edildi.
+Veri başarıyla bölündü:
+Eğitim seti: 2542744 örnek
+Doğrulama seti: 847581 örnek
+Test seti: 847582 örnek
+Eğitim veri kümesi oluşturuldu: 2542744 örnek
+Doğrulama veri kümesi oluşturuldu: 847581 örnek
+Test veri kümesi oluşturuldu: 847582 örnek
+Eğitim DataLoader oluşturuldu: 39731 batch
+Doğrulama DataLoader oluşturuldu: 13244 batch
+Test DataLoader oluşturuldu: 13244 batch
+device -  cuda
+Epoch [1/5], Train Loss: 0.9386, Val Loss: 0.8985, Val Accuracy: 0.6451, Val F1: 0.1575
+Epoch [2/5], Train Loss: 0.8945, Val Loss: 0.8790, Val Accuracy: 0.6474, Val F1: 0.1939
+Epoch [3/5], Train Loss: 0.8666, Val Loss: 0.8436, Val Accuracy: 0.6544, Val F1: 0.2463
+Epoch [4/5], Train Loss: 0.8176, Val Loss: 0.7862, Val Accuracy: 0.6692, Val F1: 0.3517
+Epoch [5/5], Train Loss: 0.7479, Val Loss: 0.7170, Val Accuracy: 0.6991, Val F1: 0.4577
+Test Accuracy: 0.6992, Test F1: 0.4560, Test Recall: 0.4144, Test Precision: 0.5338

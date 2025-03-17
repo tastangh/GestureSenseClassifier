@@ -1,0 +1,25 @@
+Model Eğitim Logları
+==================================================
+
+Veri Yükleme Tamamlandı
+Toplam Veri Sayısı: 4237907
+Veri Temizleme Atlandı
+Filtreleme Atlandı
+Dengeleme Atlandı
+Özellik Çıkarımı Atlandı
+Veri Seti Oranı 1, standart test verisi ayrıldı
+Eğitim, Doğrulama ve Test Setleri Ayrıldı
+Veri Normalizasyonu Tamamlandı
+Eğitim erken durduruldu, iterasyon 3_2_2_entropy de en iyi score elde edildi
+Eğitim erken durduruldu, iterasyon 5_2_1_gini de en iyi score elde edildi
+Eğitim erken durduruldu, iterasyon 7_2_2_entropy de en iyi score elde edildi
+Eğitim erken durduruldu, iterasyon 10_2_2_entropy de en iyi score elde edildi
+Eğitim erken durduruldu, iterasyon None_2_4_gini de en iyi score elde edildi
+En İyi Parametreler: {'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1, 'criterion': 'entropy'}
+
+Doğrulama Metrikleri:
+Doğruluk: 0.9762, F1 Skoru: 0.9637, Kesinlik: 0.9622, Duyarlılık: 0.9651
+
+Test Metrikleri:
+Doğruluk: 0.9764, F1 Skoru: 0.9644, Kesinlik: 0.9638, Duyarlılık: 0.9651
+Tüm metrikler 'metrikler.csv' dosyasına kaydedildi.

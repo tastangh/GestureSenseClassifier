@@ -1,0 +1,220 @@
+Model Eğitim Logları
+==================================================
+
+Veri Yükleme Tamamlandı
+Toplam Veri Sayısı: 4237907
+Sütunlar Silindi: ['time', 'label']
+Eksik Veriler Temizlendi
+Sınıf 0 Temizlendi
+
+Sınıf Dağılımı (Temizleme Sonrası):
+class
+6    253009
+5    251733
+4    251570
+1    250055
+3    249494
+2    243193
+7     13696
+Name: count, dtype: int64
+Bant Geçiş Filtresi Uygulandı: 20-450 Hz
+Dengeleme Atlandı
+
+Özellik Çıkarımı Tamamlandı: 15123 örnek
+Eğitim, Doğrulama ve Test Setleri Ayrıldı
+Veri Normalizasyonu Tamamlandı
+Epoch 1/500: Eğitim Kaybı: 1.2231, Doğrulama Kaybı: 1.2219
+Epoch 2/500: Eğitim Kaybı: 0.9772, Doğrulama Kaybı: 1.0009
+Epoch 3/500: Eğitim Kaybı: 0.9322, Doğrulama Kaybı: 0.9519
+Epoch 4/500: Eğitim Kaybı: 0.8664, Doğrulama Kaybı: 0.8898
+Epoch 5/500: Eğitim Kaybı: 0.8739, Doğrulama Kaybı: 0.8982
+Epoch 6/500: Eğitim Kaybı: 0.8290, Doğrulama Kaybı: 0.8554
+Epoch 7/500: Eğitim Kaybı: 0.8686, Doğrulama Kaybı: 0.9097
+Epoch 8/500: Eğitim Kaybı: 0.7494, Doğrulama Kaybı: 0.7877
+Epoch 9/500: Eğitim Kaybı: 0.7278, Doğrulama Kaybı: 0.7680
+Epoch 10/500: Eğitim Kaybı: 0.7350, Doğrulama Kaybı: 0.7743
+Epoch 11/500: Eğitim Kaybı: 0.7203, Doğrulama Kaybı: 0.7610
+Epoch 12/500: Eğitim Kaybı: 0.7240, Doğrulama Kaybı: 0.7653
+Epoch 13/500: Eğitim Kaybı: 0.7054, Doğrulama Kaybı: 0.7477
+Epoch 14/500: Eğitim Kaybı: 0.6858, Doğrulama Kaybı: 0.7301
+Epoch 15/500: Eğitim Kaybı: 0.6943, Doğrulama Kaybı: 0.7373
+Epoch 16/500: Eğitim Kaybı: 0.6842, Doğrulama Kaybı: 0.7283
+Epoch 17/500: Eğitim Kaybı: 0.6892, Doğrulama Kaybı: 0.7326
+Epoch 18/500: Eğitim Kaybı: 0.6781, Doğrulama Kaybı: 0.7224
+Epoch 19/500: Eğitim Kaybı: 0.6560, Doğrulama Kaybı: 0.7029
+Epoch 20/500: Eğitim Kaybı: 0.6649, Doğrulama Kaybı: 0.7097
+Epoch 21/500: Eğitim Kaybı: 0.6578, Doğrulama Kaybı: 0.7035
+Epoch 22/500: Eğitim Kaybı: 0.6620, Doğrulama Kaybı: 0.7067
+Epoch 23/500: Eğitim Kaybı: 0.6538, Doğrulama Kaybı: 0.6994
+Epoch 24/500: Eğitim Kaybı: 0.6408, Doğrulama Kaybı: 0.6879
+Epoch 25/500: Eğitim Kaybı: 0.6473, Doğrulama Kaybı: 0.6928
+Epoch 26/500: Eğitim Kaybı: 0.6417, Doğrulama Kaybı: 0.6880
+Epoch 27/500: Eğitim Kaybı: 0.6454, Doğrulama Kaybı: 0.6904
+Epoch 28/500: Eğitim Kaybı: 0.6388, Doğrulama Kaybı: 0.6848
+Epoch 29/500: Eğitim Kaybı: 0.6281, Doğrulama Kaybı: 0.6756
+Epoch 30/500: Eğitim Kaybı: 0.6337, Doğrulama Kaybı: 0.6794
+Epoch 31/500: Eğitim Kaybı: 0.6291, Doğrulama Kaybı: 0.6756
+Epoch 32/500: Eğitim Kaybı: 0.6324, Doğrulama Kaybı: 0.6775
+Epoch 33/500: Eğitim Kaybı: 0.6270, Doğrulama Kaybı: 0.6731
+Epoch 34/500: Eğitim Kaybı: 0.6174, Doğrulama Kaybı: 0.6650
+Epoch 35/500: Eğitim Kaybı: 0.6225, Doğrulama Kaybı: 0.6682
+Epoch 36/500: Eğitim Kaybı: 0.6187, Doğrulama Kaybı: 0.6651
+Epoch 37/500: Eğitim Kaybı: 0.6215, Doğrulama Kaybı: 0.6666
+Epoch 38/500: Eğitim Kaybı: 0.6170, Doğrulama Kaybı: 0.6630
+Epoch 39/500: Eğitim Kaybı: 0.6080, Doğrulama Kaybı: 0.6555
+Epoch 40/500: Eğitim Kaybı: 0.6128, Doğrulama Kaybı: 0.6583
+Epoch 41/500: Eğitim Kaybı: 0.6095, Doğrulama Kaybı: 0.6558
+Epoch 42/500: Eğitim Kaybı: 0.6120, Doğrulama Kaybı: 0.6569
+Epoch 43/500: Eğitim Kaybı: 0.6082, Doğrulama Kaybı: 0.6540
+Epoch 44/500: Eğitim Kaybı: 0.6003, Doğrulama Kaybı: 0.6475
+Epoch 45/500: Eğitim Kaybı: 0.6045, Doğrulama Kaybı: 0.6498
+Epoch 46/500: Eğitim Kaybı: 0.6017, Doğrulama Kaybı: 0.6477
+Epoch 47/500: Eğitim Kaybı: 0.6039, Doğrulama Kaybı: 0.6486
+Epoch 48/500: Eğitim Kaybı: 0.6006, Doğrulama Kaybı: 0.6462
+Epoch 49/500: Eğitim Kaybı: 0.5925, Doğrulama Kaybı: 0.6397
+Epoch 50/500: Eğitim Kaybı: 0.5966, Doğrulama Kaybı: 0.6416
+Epoch 51/500: Eğitim Kaybı: 0.5942, Doğrulama Kaybı: 0.6400
+Epoch 52/500: Eğitim Kaybı: 0.5962, Doğrulama Kaybı: 0.6407
+Epoch 53/500: Eğitim Kaybı: 0.5932, Doğrulama Kaybı: 0.6386
+Epoch 54/500: Eğitim Kaybı: 0.5876, Doğrulama Kaybı: 0.6343
+Epoch 55/500: Eğitim Kaybı: 0.5908, Doğrulama Kaybı: 0.6358
+Epoch 56/500: Eğitim Kaybı: 0.5887, Doğrulama Kaybı: 0.6344
+Epoch 57/500: Eğitim Kaybı: 0.5904, Doğrulama Kaybı: 0.6351
+Epoch 58/500: Eğitim Kaybı: 0.5880, Doğrulama Kaybı: 0.6335
+Epoch 59/500: Eğitim Kaybı: 0.5704, Doğrulama Kaybı: 0.6186
+Epoch 60/500: Eğitim Kaybı: 0.5750, Doğrulama Kaybı: 0.6198
+Epoch 61/500: Eğitim Kaybı: 0.5734, Doğrulama Kaybı: 0.6189
+Epoch 62/500: Eğitim Kaybı: 0.5625, Doğrulama Kaybı: 0.6091
+Epoch 63/500: Eğitim Kaybı: 0.5635, Doğrulama Kaybı: 0.6087
+Epoch 64/500: Eğitim Kaybı: 0.5610, Doğrulama Kaybı: 0.6061
+Epoch 65/500: Eğitim Kaybı: 0.5627, Doğrulama Kaybı: 0.6073
+Epoch 66/500: Eğitim Kaybı: 0.5615, Doğrulama Kaybı: 0.6066
+Epoch 67/500: Eğitim Kaybı: 0.5592, Doğrulama Kaybı: 0.6028
+Epoch 68/500: Eğitim Kaybı: 0.5576, Doğrulama Kaybı: 0.6028
+Epoch 69/500: Eğitim Kaybı: 0.5595, Doğrulama Kaybı: 0.6041
+Epoch 70/500: Eğitim Kaybı: 0.5582, Doğrulama Kaybı: 0.6031
+Epoch 71/500: Eğitim Kaybı: 0.5552, Doğrulama Kaybı: 0.6000
+Epoch 72/500: Eğitim Kaybı: 0.5577, Doğrulama Kaybı: 0.6021
+Epoch 73/500: Eğitim Kaybı: 0.5566, Doğrulama Kaybı: 0.6014
+Epoch 74/500: Eğitim Kaybı: 0.5577, Doğrulama Kaybı: 0.6018
+Epoch 75/500: Eğitim Kaybı: 0.5566, Doğrulama Kaybı: 0.6012
+Epoch 76/500: Eğitim Kaybı: 0.5521, Doğrulama Kaybı: 0.5975
+Epoch 77/500: Eğitim Kaybı: 0.5555, Doğrulama Kaybı: 0.5995
+Epoch 78/500: Eğitim Kaybı: 0.5546, Doğrulama Kaybı: 0.5991
+Epoch 79/500: Eğitim Kaybı: 0.5492, Doğrulama Kaybı: 0.5915
+Epoch 80/500: Eğitim Kaybı: 0.5460, Doğrulama Kaybı: 0.5901
+Epoch 81/500: Eğitim Kaybı: 0.5473, Doğrulama Kaybı: 0.5908
+Epoch 82/500: Eğitim Kaybı: 0.5464, Doğrulama Kaybı: 0.5901
+Epoch 83/500: Eğitim Kaybı: 0.5474, Doğrulama Kaybı: 0.5904
+Epoch 84/500: Eğitim Kaybı: 0.5465, Doğrulama Kaybı: 0.5900
+Epoch 85/500: Eğitim Kaybı: 0.5448, Doğrulama Kaybı: 0.5888
+Epoch 86/500: Eğitim Kaybı: 0.5465, Doğrulama Kaybı: 0.5897
+Epoch 87/500: Eğitim Kaybı: 0.5458, Doğrulama Kaybı: 0.5894
+Epoch 88/500: Eğitim Kaybı: 0.5463, Doğrulama Kaybı: 0.5890
+Epoch 89/500: Eğitim Kaybı: 0.5453, Doğrulama Kaybı: 0.5887
+Epoch 90/500: Eğitim Kaybı: 0.5438, Doğrulama Kaybı: 0.5883
+Epoch 91/500: Eğitim Kaybı: 0.5444, Doğrulama Kaybı: 0.5875
+Epoch 92/500: Eğitim Kaybı: 0.5438, Doğrulama Kaybı: 0.5872
+Epoch 93/500: Eğitim Kaybı: 0.5443, Doğrulama Kaybı: 0.5871
+Epoch 94/500: Eğitim Kaybı: 0.5437, Doğrulama Kaybı: 0.5870
+Epoch 95/500: Eğitim Kaybı: 0.5443, Doğrulama Kaybı: 0.5865
+Epoch 96/500: Eğitim Kaybı: 0.5431, Doğrulama Kaybı: 0.5862
+Epoch 97/500: Eğitim Kaybı: 0.5424, Doğrulama Kaybı: 0.5860
+Epoch 98/500: Eğitim Kaybı: 0.5430, Doğrulama Kaybı: 0.5859
+Epoch 99/500: Eğitim Kaybı: 0.5425, Doğrulama Kaybı: 0.5858
+Epoch 100/500: Eğitim Kaybı: 0.5429, Doğrulama Kaybı: 0.5857
+Epoch 101/500: Eğitim Kaybı: 0.5425, Doğrulama Kaybı: 0.5856
+Epoch 102/500: Eğitim Kaybı: 0.5429, Doğrulama Kaybı: 0.5855
+Epoch 103/500: Eğitim Kaybı: 0.5423, Doğrulama Kaybı: 0.5854
+Epoch 104/500: Eğitim Kaybı: 0.5397, Doğrulama Kaybı: 0.5799
+Epoch 105/500: Eğitim Kaybı: 0.5367, Doğrulama Kaybı: 0.5788
+Epoch 106/500: Eğitim Kaybı: 0.5364, Doğrulama Kaybı: 0.5788
+Epoch 107/500: Eğitim Kaybı: 0.5367, Doğrulama Kaybı: 0.5787
+Epoch 108/500: Eğitim Kaybı: 0.5364, Doğrulama Kaybı: 0.5787
+Epoch 109/500: Eğitim Kaybı: 0.5369, Doğrulama Kaybı: 0.5785
+Epoch 110/500: Eğitim Kaybı: 0.5361, Doğrulama Kaybı: 0.5783
+Epoch 111/500: Eğitim Kaybı: 0.5354, Doğrulama Kaybı: 0.5781
+Epoch 112/500: Eğitim Kaybı: 0.5359, Doğrulama Kaybı: 0.5780
+Epoch 113/500: Eğitim Kaybı: 0.5356, Doğrulama Kaybı: 0.5780
+Epoch 114/500: Eğitim Kaybı: 0.5359, Doğrulama Kaybı: 0.5779
+Epoch 115/500: Eğitim Kaybı: 0.5356, Doğrulama Kaybı: 0.5779
+Epoch 116/500: Eğitim Kaybı: 0.5360, Doğrulama Kaybı: 0.5778
+Epoch 117/500: Eğitim Kaybı: 0.5355, Doğrulama Kaybı: 0.5777
+Epoch 118/500: Eğitim Kaybı: 0.5331, Doğrulama Kaybı: 0.5731
+Epoch 119/500: Eğitim Kaybı: 0.5310, Doğrulama Kaybı: 0.5724
+Epoch 120/500: Eğitim Kaybı: 0.5307, Doğrulama Kaybı: 0.5725
+Epoch 121/500: Eğitim Kaybı: 0.5310, Doğrulama Kaybı: 0.5724
+Epoch 122/500: Eğitim Kaybı: 0.5307, Doğrulama Kaybı: 0.5724
+Epoch 123/500: Eğitim Kaybı: 0.5311, Doğrulama Kaybı: 0.5723
+Epoch 124/500: Eğitim Kaybı: 0.5306, Doğrulama Kaybı: 0.5722
+Epoch 125/500: Eğitim Kaybı: 0.5289, Doğrulama Kaybı: 0.5715
+Epoch 126/500: Eğitim Kaybı: 0.5299, Doğrulama Kaybı: 0.5712
+Epoch 127/500: Eğitim Kaybı: 0.5296, Doğrulama Kaybı: 0.5712
+Epoch 128/500: Eğitim Kaybı: 0.5300, Doğrulama Kaybı: 0.5711
+Epoch 129/500: Eğitim Kaybı: 0.5296, Doğrulama Kaybı: 0.5711
+Epoch 130/500: Eğitim Kaybı: 0.5248, Doğrulama Kaybı: 0.5685
+Epoch 131/500: Eğitim Kaybı: 0.5259, Doğrulama Kaybı: 0.5668
+Epoch 132/500: Eğitim Kaybı: 0.5254, Doğrulama Kaybı: 0.5668
+Epoch 133/500: Eğitim Kaybı: 0.5258, Doğrulama Kaybı: 0.5669
+Epoch 134/500: Eğitim Kaybı: 0.5257, Doğrulama Kaybı: 0.5669
+Epoch 135/500: Eğitim Kaybı: 0.5259, Doğrulama Kaybı: 0.5669
+Epoch 136/500: Eğitim Kaybı: 0.5257, Doğrulama Kaybı: 0.5669
+Epoch 137/500: Eğitim Kaybı: 0.5258, Doğrulama Kaybı: 0.5660
+Epoch 138/500: Eğitim Kaybı: 0.5250, Doğrulama Kaybı: 0.5661
+Epoch 139/500: Eğitim Kaybı: 0.5250, Doğrulama Kaybı: 0.5664
+Epoch 140/500: Eğitim Kaybı: 0.5252, Doğrulama Kaybı: 0.5662
+Epoch 141/500: Eğitim Kaybı: 0.5250, Doğrulama Kaybı: 0.5662
+Epoch 142/500: Eğitim Kaybı: 0.5252, Doğrulama Kaybı: 0.5662
+Epoch 143/500: Eğitim Kaybı: 0.5250, Doğrulama Kaybı: 0.5662
+Epoch 144/500: Eğitim Kaybı: 0.5252, Doğrulama Kaybı: 0.5661
+Epoch 145/500: Eğitim Kaybı: 0.5249, Doğrulama Kaybı: 0.5661
+Epoch 146/500: Eğitim Kaybı: 0.5235, Doğrulama Kaybı: 0.5656
+Epoch 147/500: Eğitim Kaybı: 0.5242, Doğrulama Kaybı: 0.5652
+Epoch 148/500: Eğitim Kaybı: 0.5240, Doğrulama Kaybı: 0.5653
+Epoch 149/500: Eğitim Kaybı: 0.5243, Doğrulama Kaybı: 0.5651
+Epoch 150/500: Eğitim Kaybı: 0.5240, Doğrulama Kaybı: 0.5651
+Epoch 151/500: Eğitim Kaybı: 0.5234, Doğrulama Kaybı: 0.5648
+Epoch 152/500: Eğitim Kaybı: 0.5238, Doğrulama Kaybı: 0.5649
+Epoch 153/500: Eğitim Kaybı: 0.5237, Doğrulama Kaybı: 0.5650
+Epoch 154/500: Eğitim Kaybı: 0.5239, Doğrulama Kaybı: 0.5649
+Epoch 155/500: Eğitim Kaybı: 0.5237, Doğrulama Kaybı: 0.5649
+Epoch 156/500: Eğitim Kaybı: 0.5239, Doğrulama Kaybı: 0.5648
+Epoch 157/500: Eğitim Kaybı: 0.5237, Doğrulama Kaybı: 0.5648
+Epoch 158/500: Eğitim Kaybı: 0.5220, Doğrulama Kaybı: 0.5628
+Epoch 159/500: Eğitim Kaybı: 0.5210, Doğrulama Kaybı: 0.5624
+Epoch 160/500: Eğitim Kaybı: 0.5208, Doğrulama Kaybı: 0.5617
+Epoch 161/500: Eğitim Kaybı: 0.5207, Doğrulama Kaybı: 0.5618
+Epoch 162/500: Eğitim Kaybı: 0.5210, Doğrulama Kaybı: 0.5620
+Epoch 163/500: Eğitim Kaybı: 0.5208, Doğrulama Kaybı: 0.5619
+Epoch 164/500: Eğitim Kaybı: 0.5206, Doğrulama Kaybı: 0.5612
+Epoch 165/500: Eğitim Kaybı: 0.5205, Doğrulama Kaybı: 0.5615
+Epoch 166/500: Eğitim Kaybı: 0.5208, Doğrulama Kaybı: 0.5619
+Epoch 167/500: Eğitim Kaybı: 0.5206, Doğrulama Kaybı: 0.5618
+Epoch 168/500: Eğitim Kaybı: 0.5207, Doğrulama Kaybı: 0.5616
+Epoch 169/500: Eğitim Kaybı: 0.5206, Doğrulama Kaybı: 0.5617
+Epoch 170/500: Eğitim Kaybı: 0.5211, Doğrulama Kaybı: 0.5620
+Epoch 171/500: Eğitim Kaybı: 0.5206, Doğrulama Kaybı: 0.5618
+Epoch 172/500: Eğitim Kaybı: 0.5203, Doğrulama Kaybı: 0.5614
+Epoch 173/500: Eğitim Kaybı: 0.5205, Doğrulama Kaybı: 0.5616
+Epoch 174/500: Eğitim Kaybı: 0.5204, Doğrulama Kaybı: 0.5616
+Epoch 175/500: Eğitim Kaybı: 0.5206, Doğrulama Kaybı: 0.5615
+Epoch 176/500: Eğitim Kaybı: 0.5204, Doğrulama Kaybı: 0.5615
+Epoch 177/500: Eğitim Kaybı: 0.5207, Doğrulama Kaybı: 0.5614
+Epoch 178/500: Eğitim Kaybı: 0.5203, Doğrulama Kaybı: 0.5614
+Epoch 179/500: Eğitim Kaybı: 0.5201, Doğrulama Kaybı: 0.5614
+Epoch 180/500: Eğitim Kaybı: 0.5203, Doğrulama Kaybı: 0.5614
+Epoch 181/500: Eğitim Kaybı: 0.5202, Doğrulama Kaybı: 0.5614
+Epoch 182/500: Eğitim Kaybı: 0.5203, Doğrulama Kaybı: 0.5614
+Epoch 183/500: Eğitim Kaybı: 0.5202, Doğrulama Kaybı: 0.5614
+Epoch 184/500: Eğitim Kaybı: 0.5203, Doğrulama Kaybı: 0.5613
+Epoch 185/500: Eğitim Kaybı: 0.5202, Doğrulama Kaybı: 0.5614
+Early stopping triggered at epoch 185!
+
+Doğrulama Metrikleri:
+Doğruluk: 0.7826, F1 Skoru: 0.7242, Kesinlik: 0.7187, Duyarlılık: 0.7930
+
+Test Metrikleri:
+Doğruluk: 0.7999, F1 Skoru: 0.7366, Kesinlik: 0.7341, Duyarlılık: 0.8071
+Tüm metrikler 'metrikler.csv' dosyasına kaydedildi.
+Senaryo Süresi: 16.33 saniye
+Finished scenario: all_processed_data_without_balanced
